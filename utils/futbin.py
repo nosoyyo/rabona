@@ -18,7 +18,7 @@ logging.basicConfig(
 logging.info('session started.')
 
 site = 'https://www.futbin.com/'
-leagues_page = site + '18/leagues'
+leagues_page = site + '18/leagues?page='
 
 # get random stuff & proxies
 UserAgentCSV = open('ua.csv', 'r')
