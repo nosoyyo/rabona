@@ -53,14 +53,14 @@ class RabonaImage():
         print('firstly we got an avrw of ' + str(avrw))
         for t in range(1, 20):
             print('doing loop #' + str(t))
-            if avrw > 50:
-                print('avrw still > 50')
+            if avrw > 55:
+                print('avrw still > 55')
                 threshold += 15
                 print('now trying with threshold ' + str(threshold))
                 _bin = self.binarize(ndarray, threshold)
                 avrw = self.getAvrW(_bin, )
                 print('and we get a new avrw of ' + str(avrw))
-                if avrw < 50:
+                if avrw < 55:
                     print('gonna break!')
                     break
             elif avrw < 40:
@@ -107,24 +107,10 @@ class RabonaImage():
             cv_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         elif isinstance(img, str) and os.path.isfile(img):
             cv_gray = cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2GRAY)
+        elif isinstance(img, Image.Image):
+            cv_gray = cv2.cvtColor(np.asarray(img), cv2.COLOR_BGR2GRAY)
         _, cv_bin = cv2.threshold(cv_gray, threshold, 255, cv2.THRESH_BINARY)
 
         # EAFP
         self._gray = cv_gray
         return cv_bin
-
-    def getSections(self, img_file, threshold=175):
-        try:
-            bin_img = self.binarize(img_file, threshold)
-            sections = {}
-            if 'some condition':
-                'this is section A'
-                sections['A'] = 'section_A'
-            elif 'some condition':
-                'this is section BCDEF'
-            elif 'some condition':
-                'this is section G'
-                sections['G'] = 'section_G'
-            return sections
-        except Exception as e:
-            print(e)
