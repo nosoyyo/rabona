@@ -21,20 +21,44 @@ class RabonaImage():
             raise InitFailure(w, 2)
         elif h < 1440:
             raise InitFailure(h, 3)
-        
+
         if h != 1920:
             cv2.resize(self._ndarray, (round(1920*w/h), 1920))
-        self._bin = self.binarize(self._raw, threshold)
-        self._100 = self.binarize(img_file, threshold=100)
-        self._100_avrw = self.getAvrW(self._100)
-        self._125 = self.binarize(img_file, threshold=125)
-        self._125_avrw = self.getAvrW(self._125)
-        self._150 = self.binarize(img_file, threshold=150)
-        self._150_avrw = self.getAvrW(self._150)
-        self._175 = self.binarize(img_file, threshold=175)
-        self._175_avrw = self.getAvrW(self._175)
-        self._200 = self.binarize(img_file, threshold=200)
-        self._200_avrw = self.getAvrW(self._200)
+
+        self._bin, self.avrw = self.dynamicThreshold(self._ndarray, threshold)
+
+    @classmethod
+    def dynamicThreshold(self, ndarray, threshold):
+        print('original threshold is ' + str(threshold))
+        _bin = self.binarize(ndarray, threshold)
+        avrw = self.getAvrW(_bin)
+        print('firstly we got an avrw of ' + str(avrw))
+        for t in range(1, 20):
+            print('doing loop #' + str(t))
+            if avrw > 50:
+                print('avrw still > 50')
+                threshold += 15
+                print('now trying with threshold ' + str(threshold))
+                _bin = self.binarize(ndarray, threshold)
+                avrw = self.getAvrW(_bin, )
+                print('and we get a new avrw of ' + str(avrw))
+                if avrw < 50:
+                    print('gonna break!')
+                    break
+            elif avrw < 40:
+                print('avrw still < 40')
+                threshold -= 15
+                print('now trying with threshold ' + str(threshold))
+                _bin = self.binarize(ndarray, threshold)
+                avrw = self.getAvrW(_bin)
+                print('and we get a new avrw of ' + str(avrw))
+                if avrw > 40:
+                    print('gonna break!')
+                    break
+            else:
+                print('Albatross!')
+                break
+        return _bin, avrw
 
     def show(self, arg='bin'):
         if arg is 'bin':
@@ -68,35 +92,35 @@ class RabonaImage():
         return cv_bin
 
     @classmethod
-    def getScreen(self, img_file, threshold):
+    def getScreen(self, bin_img):
         '''
             rect = getScreen()
         '''
-        try:
-            bin_img = self.binarize()(img_file, threshold)
-            rect = {}
-            # first guess starts from y=960
-            if sum(bin_img[960])/1080 > 175:
-                # hits a white plate, move downward 480px then upward
-                for y in range(480):
-                    # downward
-                    if sum(bin_img[960+y])/1080 < 1:
-                        rect['bottom_y0'] = 960 + y
-                    # upward
-                    elif sum(bin_img[960 - y])/1080 < 1:
-                        rect['head_y0'] = 960 - y
-            else:
-                # hits black plate, move upward then downward
-                for y in range(480):
-                    # upward
-                    if sum(bin_img[960 - y])/1080 < 1:
-                        rect['head_y1'] = 960 - y
-                        # downward
-                    elif sum(bin_img[960+y])/1080 < 1:
-                        rect['bottom_y1'] = 960 + y
-            return rect
-        except Exception as e:
-            print(e)
+        rect = {}
+        # first guess starts from y=960
+        if sum(bin_img[960])/len(bin_img[960]) > 175:
+            # hits a white plate, move downward 480px then upward
+            for y in range(480):
+                # moving downward until dark
+                if sum(bin_img[960+y])/len(bin_img[960]) < 10:
+                    rect['bottom_y0'] = 960 + y
+                    break
+                # moving upward until dark
+                elif sum(bin_img[960 - y])/len(bin_img[960]) < 10:
+                    rect['head_y0'] = 960 - y
+                    break
+        else:
+            # hits black plate, move upward then downward
+            for y in range(480):
+                # moving upward until light
+                if sum(bin_img[960-y])/len(bin_img[960-y]) > 175:
+                    rect['bottom_y1'] = 960 - y
+                    break
+                # moving downward until light
+                elif sum(bin_img[960+y])/len(bin_img[960+y]) > 175:
+                    rect['head_y1'] = 960 + y
+                    break
+        return rect
 
     def getSections(self, img_file, threshold=175):
         try:
