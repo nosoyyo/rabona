@@ -6,6 +6,7 @@ from shutil import copy
 import numpy as np
 from PIL import Image
 
+from screen import Screen
 from errors import InitFailure
 
 
@@ -22,10 +23,18 @@ class RabonaImage():
         elif h < 1440:
             raise InitFailure(h, 3)
 
+        # Rabona deal with only one height of pictures, 1920px.
         if h != 1920:
             cv2.resize(self._ndarray, (round(1920*w/h), 1920))
 
+        # get binarized with dynamicThreshold
         self._bin, self.avrw = self.dynamicThreshold(self._ndarray, threshold)
+
+        # get approx. screen size
+        self.screen = Screen(self._bin)
+        rect = self.screen.size
+        region = (rect['left'], rect['head'], rect['right'], rect['bottom'])
+        self.crop = Image.open(self._raw).crop(region)
 
     @classmethod
     def dynamicThreshold(self, ndarray, threshold):
@@ -73,6 +82,8 @@ class RabonaImage():
             cv2.imwrite(filename, img)
         elif isinstance(img, str) and os.path.isfile(img):
             copy(img, filename)
+        elif isinstance(img, Image.Image):
+            return img.show()
         tmp_img = Image.open(filename)
         tmp_img.show()
         os.remove(filename)
@@ -89,38 +100,9 @@ class RabonaImage():
             cv_gray = cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2GRAY)
         _, cv_bin = cv2.threshold(cv_gray, threshold, 255, cv2.THRESH_BINARY)
 
+        # EAFP
+        self._gray = cv_gray
         return cv_bin
-
-    @classmethod
-    def getScreen(self, bin_img):
-        '''
-            rect = getScreen()
-        '''
-        rect = {}
-        # first guess starts from y=960
-        if sum(bin_img[960])/len(bin_img[960]) > 175:
-            # hits a white plate, move downward 480px then upward
-            for y in range(480):
-                # moving downward until dark
-                if sum(bin_img[960+y])/len(bin_img[960]) < 10:
-                    rect['bottom_y0'] = 960 + y
-                    break
-                # moving upward until dark
-                elif sum(bin_img[960 - y])/len(bin_img[960]) < 10:
-                    rect['head_y0'] = 960 - y
-                    break
-        else:
-            # hits black plate, move upward then downward
-            for y in range(480):
-                # moving upward until light
-                if sum(bin_img[960-y])/len(bin_img[960-y]) > 175:
-                    rect['bottom_y1'] = 960 - y
-                    break
-                # moving downward until light
-                elif sum(bin_img[960+y])/len(bin_img[960+y]) > 175:
-                    rect['head_y1'] = 960 + y
-                    break
-        return rect
 
     def getSections(self, img_file, threshold=175):
         try:
