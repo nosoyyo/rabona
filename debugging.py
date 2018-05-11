@@ -6,22 +6,25 @@ from shutil import copy
 import numpy as np
 from PIL import Image
 
-from errors import RawImageNoGood
+from errors import InitFailure
 
 
 class RabonaImage():
 
     def __init__(self, img_file, threshold=175):
+        if not os.path.isfile(img_file):
+            raise InitFailure(img_file, 1)
         self._raw = img_file
         self._ndarray = cv2.imread(img_file)
         h, w, d = self._ndarray.shape
         if w < 1080:
-            raise RawImageNoGood(self._ndarray, 1)
+            raise InitFailure(w, 2)
         elif h < 1440:
-            raise RawImageNoGood(self._ndarray, 2)
+            raise InitFailure(h, 3)
+        
         if h != 1920:
             cv2.resize(self._ndarray, (round(1920*w/h), 1920))
-        self._bin = self.binarize(img_file, threshold)
+        self._bin = self.binarize(self._raw, threshold)
         self._100 = self.binarize(img_file, threshold=100)
         self._100_avrw = self.getAvrW(self._100)
         self._125 = self.binarize(img_file, threshold=125)
@@ -32,6 +35,12 @@ class RabonaImage():
         self._175_avrw = self.getAvrW(self._175)
         self._200 = self.binarize(img_file, threshold=200)
         self._200_avrw = self.getAvrW(self._200)
+
+    def show(self, arg='bin'):
+        if arg is 'bin':
+            self.look(self._bin)
+        elif arg is 'raw':
+            self.look(self._raw)
 
     @classmethod
     def look(self, img):
@@ -49,9 +58,11 @@ class RabonaImage():
         return bin_img.sum() / (bin_img.shape[0]*bin_img.shape[1])
 
     @classmethod
-    def binarize(self, img_file, threshold):
-
-        cv_gray = cv2.cvtColor(self._ndarray, cv2.COLOR_BGR2GRAY)
+    def binarize(self, img, threshold):
+        if isinstance(img, np.ndarray):
+            cv_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        elif isinstance(img, str) and os.path.isfile(img):
+            cv_gray = cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2GRAY)
         _, cv_bin = cv2.threshold(cv_gray, threshold, 255, cv2.THRESH_BINARY)
 
         return cv_bin

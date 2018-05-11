@@ -1,9 +1,8 @@
-class RawImageNoGood(Exception):
-    def __init__(self, raw, code):
-        h, w = raw.shape
+class InitFailure(Exception):
+    def __init__(self, msg, code):
         if code is 1:
-            message = '{} too narrow. min width 1080'.format(w)
+            print('file {} not found or maybe broken.'.format(msg))
         elif code is 2:
-            message = '{} too short. min height 608'.format(h)
+            print('width={}: too narrow. min width 1080'.format(msg))
         elif code is 3:
-            message = ''
+            print('height={}: too short. min height 608'.format(msg))
