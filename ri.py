@@ -2,9 +2,9 @@
 import os
 import cv2
 import uuid
-from shutil import copy
 import numpy as np
 from PIL import Image
+from shutil import copy
 
 from screen import Screen
 from errors import InitFailure
@@ -15,7 +15,6 @@ class RabonaImage():
     def __init__(self, img_file, threshold=175):
         if not os.path.isfile(img_file):
             raise InitFailure(img_file, 1)
-        self._raw = img_file
         self._ndarray = cv2.imread(img_file)
         h, w, d = self._ndarray.shape
         if w < 1080:
@@ -25,16 +24,26 @@ class RabonaImage():
 
         # Rabona deal with only one height of pictures, 1920px.
         if h != 1920:
-            cv2.resize(self._ndarray, (round(1920*w/h), 1920))
+            self._ndarray = cv2.resize(self._ndarray, (round(1920*w/h), 1920))
+            self._raw = Image.open(img_file)
+            _raw_dest = (round(1920*self._raw.width/self._raw.height), 1920)
+            self._raw = self._raw.resize(_raw_dest, Image.LANCZOS)
 
         # get binarized with dynamicThreshold
         self._bin, self.avrw = self.dynamicThreshold(self._ndarray, threshold)
 
-        # get approx. screen size
+        # get the screen and crop
         self.screen = Screen(self._bin)
-        rect = self.screen.size
-        region = (rect['left'], rect['head'], rect['right'], rect['bottom'])
-        self.crop = Image.open(self._raw).crop(region)
+
+    def crop(self):
+        '''
+            temporary
+        '''
+        region = self.screen.rect
+        ow, oh = self._raw.width, self._raw.height
+        new_w = round(1920*ow / oh)
+        self.screen._raw = self._raw.resize(
+            (new_w, 1920), Image.LANCZOS).crop(region)
 
     @classmethod
     def dynamicThreshold(self, ndarray, threshold):

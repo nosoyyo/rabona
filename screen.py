@@ -10,7 +10,7 @@ class Screen():
             self.size['bottom'] = self.size['head'] + 480
 
         rect = self.size
-        self.crop = (rect['left'], rect['head'], rect['right'], rect['bottom'])
+        self.rect = (rect['left'], rect['head'], rect['right'], rect['bottom'])
         self._bin = 'not implemented'
 
     @classmethod
