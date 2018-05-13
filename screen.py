@@ -1,23 +1,37 @@
 class Screen():
 
-    def __init__(self, _bin):
+    def __init__(self, _bin, raw_wh, bleed=50):
 
         self.size = self.getScreen(_bin)
+        bin_w, bin_h = len(_bin[0]), len(_bin)
 
         if 'bottom' in self.size.keys():
             self.size['head'] = self.size['bottom'] - 480
+            self.size['bottom'] += bleed
         elif 'head' in self.size.keys():
-            self.size['bottom'] = self.size['head'] + 480
+            self.size['bottom'] = self.size['head'] + 480 + bleed
 
+        def scalingBack(rect):
+            w1, h1, w2, h2 = rect[0], rect[1], rect[2], rect[3]
+            print(bin_w, bin_h, raw_wh)
+            w1, w2 = round(w1/bin_w*raw_wh[0]), round(w2/bin_w*raw_wh[0])
+            h1, h2 = round(h1/bin_h*raw_wh[1]), round(h2/bin_h*raw_wh[1])
+            return (w1, h1, w2, h2)
+
+        # ndarray.width * 1920
         rect = self.size
-        self.rect = (rect['left'], rect['head'], rect['right'], rect['bottom'])
-        self._bin = 'not implemented'
+        self.bin_rect = (rect['left'], rect['head'],
+                         rect['right'], rect['bottom'])
+        self.real_rect = scalingBack(self.bin_rect)
+        self._bin = 'not there yet'
 
     @classmethod
     def getScreen(self, bin_img):
         '''
             bin_img: ndarray
             rect = getScreen()
+            all the calculations are based on a x*1920 ndarray
+            so the return dict needs to be transformed back to raw size
         '''
         rect = {}
         w, h = len(bin_img[0]), len(bin_img)
