@@ -8,16 +8,17 @@ from PIL import Image
 from screen import Screen
 from errors import InitFailure
 from dynamic import dynamicThreshold
-from templates.FIFA18 import DetectScreen, Segmentation
+from templates.FIFA18 import Preparation, RectifyScreen, Segmentation
 
 
 class Photo():
     def __init__(self, _input):
-        self.photo = self.convert(_input, output='PIL.Image')
+        self.photo = self.convert(_input, _format='PIL.Image')
+        self._ndarray = self.convert(_input, _format='np.ndarray')
 
     @classmethod
-    def convert(self, _input, output='PIL.Image'):
-        if output is 'PIL.Image':
+    def convert(self, _input, to='PIL.Image'):
+        if to == 'PIL.Image':
             if isinstance(_input, np.ndarray):
                 output = Image.fromarray(_input)
             elif isinstance(_input, str) and os.path.isfile(_input):
@@ -26,7 +27,11 @@ class Photo():
                 output = _input
             elif isinstance(_input, tuple):
                 output = Image.fromarray(_input)
-        elif output is 'np.ndarray':
+            elif isinstance(_input, RabonaImage):
+                output = _input._raw
+            return output
+
+        elif to == 'np.ndarray':
             if isinstance(_input, np.ndarray):
                 output = _input
             elif isinstance(_input, str) and os.path.isfile(_input):
@@ -34,24 +39,27 @@ class Photo():
             elif isinstance(_input, Image.Image):
                 output = np.asarray(_input)
             elif isinstance(_input, tuple):
-                output = np.asarray(_input)s
-        return output
+                output = np.asarray(_input)
+            elif isinstance(_input, RabonaImage):
+                output = _input._ndarray
+            return output
+
+        else:
+            raise InitFailure(_input, 0)
 
 
 class RabonaImage():
 
-    def __init__(self, img_file):
-        if not os.path.isfile(img_file):
-            raise InitFailure(img_file, 1)
-        self._ndarray = cv2.imread(img_file)
+    def __init__(self, _input):
+        self._ndarray = Photo.convert(_input, 'np.ndarray')
         h, w, d = self._ndarray.shape
-        if w < 1080 or h < 1080:
+        if min(w, h) < 1080:
             raise InitFailure(w, 2)
         elif h < 1440:
             raise InitFailure(h, 3)
 
         # get the raw image obj
-        self._raw = Image.open(img_file)
+        self._raw = Photo.convert(_input, 'PIL.Image')
         self._raw_w, self._raw_h = self._raw.width, self._raw.height
 
         # Rabona deal with only one height of pictures, 1920px.
@@ -59,18 +67,22 @@ class RabonaImage():
             self._ndarray = cv2.resize(self._ndarray, (round(1920*w/h), 1920))
 
         # get binarized with dynamicThreshold
-        self._bin, self.avrw = dynamicThreshold(self._ndarray, DetectScreen)
+        self._bin, self.avrw = dynamicThreshold(self._ndarray, Preparation)
 
         # get the screen and go on dealing
+        self.buildScreen()
+
+    def buildScreen(self):
         self.screen = Screen(
-            self._bin, (self._raw_w, self._raw_h), DetectScreen.bleed)
-        self.crop()
+            self._bin, (self._raw_w, self._raw_h), RectifyScreen)
+        self.screen._raw = self._raw.crop(self.screen.real_rect)
         self.screen._bin, self.screen._bin_avrw = dynamicThreshold(
             self.screen._raw, Segmentation)
 
-    def crop(self):
-        region = self.screen.real_rect
-        self.screen._raw = self._raw.crop(region)
+        bin_h, bin_w = self.screen._bin.shape
+        if 1.7 < bin_w/bin_h < 2.1:
+            self.aspect_ratio = bin_w/bin_h
+            print('aspect ratio {} probabily good'.format(self.aspect_ratio))
 
     def show(self, arg='bin'):
         if arg is 'bin':

@@ -1,64 +1,74 @@
-import os
-import cv2
-import numpy as np
-from PIL import Image
 import pytesseract as pyt
 
-from ri import RabonaImage as RI
+from ri import Photo
 from templates.FIFA18 import Segmentation
 
 
 class RabonaParser():
     '''
-        do parse job on binarized screen img
+        do parse job on binarized screen img,
+        only RI.screen._bin
     '''
 
-    def __init__(self, i, template):
-        if isinstance(i, Image.Image):
-            self._bin = i
-        elif isinstance(i, np.ndarray):
-            self._bin = Image.fromarray(img)
-        elif isinstance(i, RI):
-            self._bin = i.screen._bin
-
+    def __init__(self, _input, template):
+        # EAFP
+        self._bin = Photo.convert(_input, to='np.ndarray')
         self._bin_w, self._bin_h = len(self._bin[0]), len(self._bin)
 
+        # Section A
+        self._bin_A = self.slice_A(self._bin, Segmentation)
         self.score_area = self.getScoreArea(self._bin_A, Segmentation)
         self.score = self.getScore(self.score_area)
 
-    def slice_A(self, template):
+    @classmethod
+    def slice_A(self, _bin, template):
         '''
-            # District A
-            # A_ratio for instance: 0.1723
+            # crop Section A out of Screen._bin
+            # A_ratio for instance: 0.25
         '''
-        y = int(self._bin_h*template.A_ratio)
-        _bin_A = self._bin[0:y]
+        h, w = _bin.shape
+        y = int(h*template.A_ratio)
+        print('y({}) = h({}) * A_ratio({})'.format(y, h, template.A_ratio))
+
+        # get rid of the non-dark bottom rows
+        for step in range(1, y):
+            print('range: {}'.format((1, y)))
+            if sum(_bin[0:y][-1]) / w > 1:
+                print('avrw of row[{}] is {}'.format(
+                    y-1, sum(_bin[0:y][y-step]) / w))
+                y -= 1
+                if sum(_bin[0:y][-1]) / w < 1:
+                    print('gonna break on y={}'.format(y))
+                    break
+            else:
+                print('Albatross!')
+                break
+        _bin_A = _bin[0:y]
+        print('height {}, width {}'.format(y, len(_bin_A[0])))
         return _bin_A
 
     @classmethod
     def getScoreArea(self, _bin_A, template):
-        if isinstance(_bin_A, np.ndarray):
-            pass
-        elif os.path.isfile(_bin_A):
-            _bin_A = cv2.imread(_bin_A)
-        elif isinstance(_bin_A, Image.Image):
-            _bin_A = np.asarray(_bin_A)
 
-        w, h = len(_bin_A[0]), len(_bin_A)
-        print(w, h)
+        h, w = _bin_A.shape
+        print('_bin_A height: {}, width: {}'.format(h, w))
 
-        # get score_area
-        half_A = _bin_A[-(int(h/2)):w]
-        print('half_A.shape: ' + str(half_A.shape))
-        #
-        score_area_w = round(w * 0.1281)
+        # deal with width
+        score_area_w = round(w * template.A_score_ratio) + \
+            template.A_score_bleed
         print('score_area_w: ' + str(score_area_w))
         score_area_start = round(w/2) - round(score_area_w/2) + 1
         print('score_area_start: ' + str(score_area_start))
-        return half_A[:, score_area_start:score_area_start + score_area_w]
+
+        # remove the bottom black block
+        for i in range(2, len(_bin_A)-1):
+            y = len(_bin_A) - i
+            if sum(sum(_bin_A[y-1:y+1])/len(_bin_A[y])*3) > 1:
+                break
+        sa = _bin_A[0:y]
+
+        return sa[:, score_area_start:score_area_start + score_area_w]
 
     @classmethod
     def getScore(self, score_area):
-        score_area = RI.invert(score_area)
-        img = Image.fromarray(score_area)
-        return pyt.image_to_string(img, lang='eng')
+        return pyt.image_to_string(score_area, config='--psm 7', lang='eng')
