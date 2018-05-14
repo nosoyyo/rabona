@@ -15,6 +15,7 @@ class Segmentation():
         do segmenting on the screen detected
         so pure screen here, avr_whiteness could be high!
     '''
+    bleed = 10
     guess = 175
     bounds = (136, 146)
     step = 4
