@@ -13,8 +13,8 @@ from templates.FIFA18 import Preparation, RectifyScreen, Segmentation
 
 class Photo():
     def __init__(self, _input):
-        self.photo = self.convert(_input, _format='PIL.Image')
-        self._ndarray = self.convert(_input, _format='np.ndarray')
+        self.photo = self.convert(_input, to='PIL.Image')
+        self._ndarray = self.convert(_input, to='np.ndarray')
 
     @classmethod
     def convert(self, _input, to='PIL.Image'):
@@ -29,7 +29,6 @@ class Photo():
                 output = Image.fromarray(_input)
             elif isinstance(_input, RabonaImage):
                 output = _input._raw
-            return output
 
         elif to == 'np.ndarray':
             if isinstance(_input, np.ndarray):
@@ -42,8 +41,9 @@ class Photo():
                 output = np.asarray(_input)
             elif isinstance(_input, RabonaImage):
                 output = _input._ndarray
-            return output
 
+        if output:
+            return output
         else:
             raise InitFailure(_input, 0)
 

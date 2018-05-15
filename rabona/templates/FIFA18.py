@@ -44,3 +44,10 @@ class Segmentation():
 
     # A_score_bleed should be a tiny value, like 2~4 px
     A_score_bleed = 2
+
+
+class Matching():
+    '''
+        to absolute positioning
+    '''
+    pass
