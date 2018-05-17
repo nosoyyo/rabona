@@ -5,6 +5,8 @@ class InitFailure(Exception):
         elif code is 1:
             print('file {} not found or maybe broken.'.format(msg))
         elif code is 2:
-            print('width={}: too narrow. min width 1080'.format(msg))
+            print('height={}: too short. min width 960'.format(msg))
         elif code is 3:
-            print('height={}: too short. min height 608'.format(msg))
+            print('anchors={}: should be 2'.format(msg))
+        elif code is 4:
+            print('cannot get anchor! ')
