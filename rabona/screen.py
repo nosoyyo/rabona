@@ -1,89 +1,100 @@
+import logging
+import numpy as np
+from face_recognition import face_locations
+
+from hub import ImageHub
+from errors import InitFailure
+from src.FIFA18 import Anchoring
+
+DEBUG = True
+
+# init
+logging.basicConfig(
+    filename='log/screen.log',
+    level=logging.INFO,
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+
+
 class Screen():
 
-    def __init__(self, _bin, raw_wh, template):
+    def __init__(self, _input):
+        try:
+            self.filename = _input
+            self._raw = ImageHub.convert(_input, 'np.ndarray')
+        except Exception as e:
+            print(e)
 
-        self.size = self.rectify(_bin, template)
-        bin_w, bin_h = len(_bin[0]), len(_bin)
+        # meta
+        self._raw_w, self._raw_h = len(self._raw[0]), len(self._raw)
+        logging.info('Screen get the raw image w{} x h{}.'.format(
+            self._raw_w, self._raw_h))
 
-        if 'bottom' in self.size.keys():
-            self.size['head'] = self.size['bottom'] - 480
-            self.size['bottom'] += template.bleed
-        elif 'head' in self.size.keys():
-            self.size['bottom'] = self.size['head'] + 480 + template.bleed
+        # crop
+        self.readFaces()
+        self.crop()
 
-        def scalingBack(rect):
-            w1, h1, w2, h2 = rect[0], rect[1], rect[2], rect[3]
-            print(bin_w, bin_h, raw_wh)
-            w1, w2 = round(w1/bin_w*raw_wh[0]), round(w2/bin_w*raw_wh[0])
-            h1, h2 = round(h1/bin_h*raw_wh[1]), round(h2/bin_h*raw_wh[1])
-            return (w1, h1, w2, h2)
+    def readFaces(self):
+        self.faces = None
 
-        rect = self.size
-        self.bin_rect = (rect['left'], rect['head'],
-                         rect['right'], rect['bottom'])
-        self.real_rect = scalingBack(self.bin_rect)
-        self._bin = 'not ready yet'
+        faces = face_locations(self._raw)
+        if faces[0][1] > faces[1][1]:
+            faces[0], faces[1] = faces[1], faces[0]
+        self.faces = faces
+        logging.info('{} faces detected'.format(len(self.faces)))
 
-    @classmethod
-    def rectify(self, bin_img, template):
-        '''
-            bin_img: ndarray
-            rect = getScreen()
-            all the calculations are based on a x*1920 ndarray
-            so the return dict needs to be transformed back to raw size
-        '''
-        rect = {}
-        w, h = len(bin_img[0]), len(bin_img)
+        def makeFaces(faces):
+            rects = []
+            for i in range(len(faces)):
+                rects.append(
+                    (faces[i][3], faces[i][0], faces[i][1], faces[i][2]))
+            return np.array(rects)
 
-        # first guess starts from y=960
-        if sum(bin_img[960])/len(bin_img[960]) > template.threshold:
-            # hits a white plate, move downward 480px then upward
-            for y in range(480):
-                # moving downward until dark
-                if sum(bin_img[960+y])/len(bin_img[960]) < template.vertical_darkness:
-                    rect['bottom'] = 960 + y
-                    break
-                # moving upward until dark
-                elif sum(bin_img[960 - y])/len(bin_img[960]) < template.vertical_darkness:
-                    rect['head'] = 960 - y
-                    break
+        self.faces = makeFaces(self.faces)
+
+    def crop(self):
+        if len(self.faces) == 2:
+            face_l, face_r = self.faces[0], self.faces[1]
+            face_width = int(
+                ((face_l[2] - face_l[0]) + (face_r[2] - face_r[0])) / 2)
+            logging.info('face width: {}'.format(face_width))
+            E_width = abs(face_r[0] - face_l[0])
+            logging.info('E_width: {}'.format(E_width))
+
+            # Section E
+            E_x0 = face_l[2] + Anchoring.E_x0_bleed
+            E_x1 = face_r[0] - Anchoring.E_x1_bleed
+            E_y0 = min(face_l[1], face_l[3], face_r[1],
+                       face_r[3]) - Anchoring.E_y_bleed
+            E_y1 = max(face_l[1], face_l[3], face_r[1],
+                       face_r[3]) + Anchoring.E_y_bleed
+            self.E = self._raw[E_y0:E_y1, E_x0:E_x1]
+            logging.info('E: {}'.format((E_x0, E_y0, E_x1, E_y1)))
+            if DEBUG:
+                ImageHub.save(self.E, self.filename + '_E')
+
+            # Section A
+            A_x0 = int(E_x0 + face_width)
+            A_y0 = int(E_y0 - round(E_width*1.5) + Anchoring.A_y0_bleed)
+            A_x1 = int(E_x1 + E_width*2 + face_width*3)
+            A_y1 = int(A_y0 + face_width*2)
+            self.A = self._raw[A_y0:A_y1, A_x0:A_x1]
+            logging.info('A: {}'.format((A_x0, A_y0, A_x1, A_y1)))
+            if DEBUG:
+                ImageHub.save(self.A, self.filename + '_A')
+
+            # score_area
+            sa_x0 = int(E_x1 + E_width*0.75)
+            sa_y0 = int(A_y0)
+            # meimaobing, biedong sa_x1
+            sa_x1 = int(sa_x0 + E_width/2) + Anchoring.sa_x_bleed
+            # meimaobing, biedong sa_y1
+            sa_y1 = int(sa_y0 + face_width + Anchoring.sa_y_bleed)
+            self.sa = self._raw[sa_y0:sa_y1, sa_x0:sa_x1]
+            logging.info('sa: {}'.format((sa_x0, sa_y0, sa_x1, sa_y1)))
+            if DEBUG:
+                ImageHub.save(self.sa, self.filename + '_sa')
+
+            # home name
+
         else:
-            # hits black plate, move upward then downward
-            for y in range(480):
-                # moving upward until light
-                if sum(bin_img[960-y])/len(bin_img[960-y]) > template.vertical_whiteness:
-                    rect['bottom'] = 960 - y
-                    break
-                # moving downward until light
-                elif sum(bin_img[960+y])/len(bin_img[960+y]) > template.vertical_whiteness:
-                    rect['head'] = 960 + y
-                    break
-
-        # then find right edge starts from 80%
-        startpoint = round(w*0.8)
-        if bin_img[:, startpoint].sum()/h > template.right_whiteness:
-            # hits a white plate
-            for x in range(w-startpoint):
-                # moving rightward
-                if sum(bin_img[:, startpoint+x])/h < template.right_darkness:
-                    rect['right'] = startpoint + x
-                    break
-                # moving leftward
-                pass
-        else:
-            print('cant find right edge, raw image might be no good')
-
-        # then find left edge starts from x=200
-        if bin_img[:, 200].sum()/h > template.left_whiteness:
-            # hits a white plate
-            for x in range(200):
-                # moving leftward
-                if sum(bin_img[:, 200-x])/h < template.left_darkness:
-                    rect['left'] = 200 - x
-                    break
-                # moving rightward
-                pass
-        else:
-            print('cant find left edge, raw image might be no good')
-
-        return rect
+            raise InitFailure(self, 4)

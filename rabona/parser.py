@@ -1,6 +1,6 @@
 import pytesseract as pyt
 
-from ri import Photo
+from hub import ImageHub
 from templates.FIFA18 import Segmentation
 
 
