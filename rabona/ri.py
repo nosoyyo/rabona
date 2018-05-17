@@ -1,7 +1,6 @@
 # pythonw
 from hub import ImageHub
 from screen import Screen
-from errors import InitFailure
 
 
 class RabonaImage():
@@ -14,5 +13,3 @@ class RabonaImage():
         self._raw = ImageHub.convert(_input, 'PIL.Image')
         self._raw_w, self._raw_h = self._raw.width, self._raw.height
         self.screen = Screen(self._raw)
-
-
