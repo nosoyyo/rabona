@@ -10,7 +10,9 @@ from telegram.ext import (Updater, CommandHandler, CallbackQueryHandler,
                           MessageHandler, Filters)
 
 from models.ru import RabonaUser
+from models.rm import RabonaMatch
 from ri import RabonaImage
+from parser import all_clubs
 
 
 logging.basicConfig(
@@ -22,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 # main menu
 main_menu_kb = [[InlineKeyboardButton("上传战果", callback_data='upload'),
-                 InlineKeyboardButton("查看战绩", callback_data='results')],
+                 InlineKeyboardButton("手动输入", callback_data='raw_input'), ],
+                [InlineKeyboardButton("查看战绩", callback_data='results')],
                 [InlineKeyboardButton("赛事", callback_data='events')]]
 
 main_menu = InlineKeyboardMarkup(main_menu_kb)
@@ -34,7 +37,8 @@ cancel_markup = InlineKeyboardMarkup(cancel_kb)
 
 # result confirmation
 confirmation_kb = [[InlineKeyboardButton("没毛病", callback_data='correct'),
-                    InlineKeyboardButton("有毛病", callback_data='wrong')]]
+                    InlineKeyboardButton("有毛病", callback_data='wrong')],
+                   [InlineKeyboardButton("算了", callback_data='cancel')]]
 confirmation_markup = InlineKeyboardMarkup(confirmation_kb)
 
 
@@ -51,32 +55,45 @@ def start(bot, update):
 def button(bot, update):
     query = update.callback_query
     user = RabonaUser(update.effective_user)
+    print(query.data)
     if query.data == 'upload':
         bot.edit_message_text(text="来吧"+user.title+"，照片走起！",
                               reply_markup=cancel_markup,
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id)
-
+    elif query.data == 'raw_input':
+        pass
     elif query.data == 'results':
-        bot.edit_message_text(text="你等等",
+        bot.edit_message_text(text="并没有这个功能😱",
                               reply_markup=cancel_markup,
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id)
     elif query.data == 'events':
-        bot.edit_message_text(text="木有这个功能😱",
+        bot.edit_message_text(text="也没有这个功能😱",
                               reply_markup=main_menu,
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id)
-
     elif query.data == 'cancel':
         bot.edit_message_text(text="想好再来😁嘻嘻",
                               reply_markup=main_menu,
                               chat_id=query.message.chat_id,
                               message_id=query.message.message_id)
+    elif query.data == 'correct':
+        opponent(bot, update)
+    elif query.data == 'wrong':
+        update.message.reply_text('好的我会跟进一下看看问题出在哪里。一般是你照片没拍好。')
+    elif query.data in all_clubs:
+        pass
 
 
 def opponent(bot, update):
-    pass
+    user = RabonaUser(update.effective_user)
+    match = RabonaMatch.getLastMatch(user)
+    choose_side = [[match.home, match.away]]
+    bot.edit_message_text(
+        text='你是哪边的？',
+        reply_markup=ReplyKeyboardMarkup(choose_side),
+        one_time_keyboard=True)
 
 
 def photo(bot, update):
@@ -91,8 +108,9 @@ def photo(bot, update):
 
     # deal with local photo file
     ri = RabonaImage(local_file_name)
-    update.message.reply_text('你看下对不对：{}'.format(
-        ri.A_parsed), reply_markup=confirmation_markup)
+    RabonaMatch(user=user, data=ri.A_parsed)
+    update.message.reply_text('我觉得是这样的，你看下对不对：{}'.format(
+        ri.A_parsed.match_result), reply_markup=confirmation_markup)
 
 
 def help(bot, update):

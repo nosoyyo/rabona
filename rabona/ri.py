@@ -1,5 +1,6 @@
 # pythonw
 import logging
+import pytesseract as pyt
 
 from screen import Screen
 from hub import ImageHub
@@ -25,9 +26,14 @@ class RabonaImage():
 
         self.screen = Screen(_input)
 
-        # parsing
-        self.A_json = self.send4OCR(self.screen.A)
-        self.A_parsed = RabonaParserA(self.A_json)
+        # parsing with ocr.space
+        # self.A_json = self.send4OCR(self.screen.A)
+        # self.A_parsed = RabonaParserA(self.A_json)
+
+        # parsing with local.pyt
+        A = ImageHub.convert(self.screen.A, 'np.ndarray')
+        A_rough = pyt.image_to_string(A, config='--psm 6', lang='eng')
+        self.A_parsed = RabonaParserA(A_rough)
 
     def send4OCR(self, _input):
         file_full_name = self.filename + '_ocr' + self.suffix

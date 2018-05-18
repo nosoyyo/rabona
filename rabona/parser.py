@@ -19,26 +19,29 @@ class RabonaParserA():
 
     '''
 
-    def __init__(self, j):
-        print(j)
-        raw = j['ParsedResults'][0]['ParsedText'].replace(
-            '\r', '').replace('\n', '').split('-')
-        logging.info('accept input json {}'.format(raw))
+    def __init__(self, _input):
+        if isinstance(_input, dict):
+            self.raw = _input['ParsedResults'][0]['ParsedText'].replace(
+                '\r', '').replace('\n', '').split('-')
+            logging.info('accept input json {}'.format(self.raw))
+        elif isinstance(_input, str):
+            self.raw = _input.replace('\r', '').replace('\n', '').split('-')
+            logging.info('accept input string {}'.format(self.raw))
 
-        self.home = process.extractOne(raw[0], all_clubs)[0]
+        self.home = process.extractOne(self.raw[0], all_clubs)[0]
         logging.info('retrieved home name {}'.format(self.home))
 
-        self.away = process.extractOne(raw[1], all_clubs)[0]
+        self.away = process.extractOne(self.raw[1], all_clubs)[0]
         logging.info('retrieved away name {}'.format(self.away))
 
-        self.home_score = raw[0].strip().split(' ')[-1]
+        self.home_score = self.raw[0].strip().split(' ')[-1]
         logging.info('retrieved home score {}'.format(self.home_score))
 
-        self.away_score = raw[1].strip().split(' ')[0]
+        self.away_score = self.raw[1].strip().split(' ')[0]
         logging.info('retrieved away score {}'.format(self.away_score))
 
         self.match_score = self.home_score + ' : ' + self.away_score
 
         self.match_result = '{} {} {}'.format(
-            self.home, self.match_result, self.away)
+            self.home, self.match_score, self.away)
         logging.info('match result: {}'.format(self.match_result))
