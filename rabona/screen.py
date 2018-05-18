@@ -16,10 +16,15 @@ logging.basicConfig(
 
 
 class Screen():
+    '''
+
+    :param _input: `str` input a file name.
+    '''
 
     def __init__(self, _input):
         try:
-            self.filename = _input
+            self.filename = _input.replace(_input.split('.')[-1], '')[:-1]
+            self.suffix = '.' + _input.split('.')[-1]
             self._raw = ImageHub.convert(_input, 'np.ndarray')
         except Exception as e:
             print(e)
@@ -70,17 +75,16 @@ class Screen():
             self.E = self._raw[E_y0:E_y1, E_x0:E_x1]
             logging.info('E: {}'.format((E_x0, E_y0, E_x1, E_y1)))
             if DEBUG:
-                ImageHub.save(self.E, self.filename + '_E')
-
-            # Section A
+                ImageHub.save(self.E, self.filename + '_E' + self.suffix)
+                # Section A
             A_x0 = int(E_x0 + face_width)
             A_y0 = int(E_y0 - round(E_width*1.5) + Anchoring.A_y0_bleed)
             A_x1 = int(E_x1 + E_width*2 + face_width*3)
-            A_y1 = int(A_y0 + face_width*2)
+            A_y1 = int(A_y0 + face_width*3)
             self.A = self._raw[A_y0:A_y1, A_x0:A_x1]
             logging.info('A: {}'.format((A_x0, A_y0, A_x1, A_y1)))
             if DEBUG:
-                ImageHub.save(self.A, self.filename + '_A')
+                ImageHub.save(self.A, self.filename + '_A' + self.suffix)
 
             # score_area
             sa_x0 = int(E_x1 + E_width*0.75)
@@ -92,7 +96,7 @@ class Screen():
             self.sa = self._raw[sa_y0:sa_y1, sa_x0:sa_x1]
             logging.info('sa: {}'.format((sa_x0, sa_y0, sa_x1, sa_y1)))
             if DEBUG:
-                ImageHub.save(self.sa, self.filename + '_sa')
+                ImageHub.save(self.sa, self.filename + '_sa' + self.suffix)
 
             # home name
 

@@ -1,5 +1,4 @@
 import os
-import cv2
 import uuid
 import numpy as np
 from PIL import Image
@@ -39,8 +38,16 @@ class ImageHub():
         self.convert(_input, to='PIL.Image').show()
 
     @classmethod
+    def invert(self, _input):
+        _input = self.convert(_input, 'np.ndarray')
+        for y in range(len(_input)):
+            for x in range(len(_input[0])):
+                _input[y][x] = abs(255-_input[y][x])
+        return _input
+
+    @classmethod
     def save(self, _input, filename=None, format='jpeg'):
-        _input = self.convert(_input, to='np.ndarray')
+        _input = self.convert(_input, to='PIL.Image')
 
         def makeFilename(format='jpeg'):
             if format in ['jpg', 'jpeg']:
@@ -52,12 +59,4 @@ class ImageHub():
         if not filename:
             filename = makeFilename(format=format)
 
-        cv2.imwrite(filename, _input)
-
-    @classmethod
-    def invert(self, _input):
-        _input = self.convert(_input, 'np.ndarray')
-        for y in range(len(_input)):
-            for x in range(len(_input[0])):
-                _input[y][x] = abs(255-_input[y][x])
-        return _input
+        _input.save(filename)
