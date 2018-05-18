@@ -1,3 +1,4 @@
+import json
 import logging
 import requests
 
@@ -37,8 +38,11 @@ def ocr_space_file(filename, overlay=False, api_key=ocr_space_apikey, language='
                           )
 
     j = r.content.decode()
+    print(type(j))
+    j = json.loads(j)
+    print(type(j))
     logging.info(
-        'got the ocr.space response {}\ngoing to RabonaParser.'.format(j))
+        'got the ocr.space response {}\ngoing to RabonaParser. j type is {}'.format(j, type(j)))
     return j
 
 

@@ -49,6 +49,7 @@ class RabonaUser():
                 u.write(self.tele_id + ' ')
             uid = loadUID()
             os.makedirs('data/users/' + self.tele_id)
+            os.makedirs(self.dir + 'matches')
             logging.info('aloha! new user {}'.format(self.tele_id))
             return True
         else:
