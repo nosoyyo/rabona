@@ -1,0 +1,9 @@
+arrow
+numpy
+# cv2
+apistar
+telegram
+fuzzywuzzy
+pytesseract
+face-recognition
+python-Levenshtein

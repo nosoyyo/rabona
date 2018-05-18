@@ -1,74 +1,44 @@
-import pytesseract as pyt
+import logging
+from fuzzywuzzy import process
 
-from hub import ImageHub
-from templates.FIFA18 import Segmentation
+# init
+logging.basicConfig(
+    filename='log/parser.log',
+    level=logging.INFO,
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 
 
-class RabonaParser():
+with open('data/leagues/all_clubs', 'r') as f:
+    all_clubs = f.readlines()
+all_clubs = [club.replace('\n', '') for club in all_clubs]
+logging.info('{} club names loaded.'.format(len(all_clubs)))
+
+
+class RabonaParserA():
     '''
-        do parse job on binarized screen img,
-        only RI.screen._bin
+
     '''
 
-    def __init__(self, _input, template):
-        # EAFP
-        self._bin = Photo.convert(_input, to='np.ndarray')
-        self._bin_w, self._bin_h = len(self._bin[0]), len(self._bin)
+    def __init__(self, j):
+        print(j)
+        raw = j['ParsedResults'][0]['ParsedText'].replace(
+            '\r', '').replace('\n', '').split('-')
+        logging.info('accept input json {}'.format(raw))
 
-        # Section A
-        self._bin_A = self.slice_A(self._bin, Segmentation)
-        self.score_area = self.getScoreArea(self._bin_A, Segmentation)
-        self.score = self.getScore(self.score_area)
+        self.home = process.extractOne(raw[0], all_clubs)[0]
+        logging.info('retrieved home name {}'.format(self.home))
 
-    @classmethod
-    def slice_A(self, _bin, template):
-        '''
-            # crop Section A out of Screen._bin
-            # A_ratio for instance: 0.25
-        '''
-        h, w = _bin.shape
-        y = int(h*template.A_ratio)
-        print('y({}) = h({}) * A_ratio({})'.format(y, h, template.A_ratio))
+        self.away = process.extractOne(raw[1], all_clubs)[0]
+        logging.info('retrieved away name {}'.format(self.away))
 
-        # get rid of the non-dark bottom rows
-        for step in range(1, y):
-            print('range: {}'.format((1, y)))
-            if sum(_bin[0:y][-1]) / w > 1:
-                print('avrw of row[{}] is {}'.format(
-                    y-1, sum(_bin[0:y][y-step]) / w))
-                y -= 1
-                if sum(_bin[0:y][-1]) / w < 1:
-                    print('gonna break on y={}'.format(y))
-                    break
-            else:
-                print('Albatross!')
-                break
-        _bin_A = _bin[0:y]
-        print('height {}, width {}'.format(y, len(_bin_A[0])))
-        return _bin_A
+        self.home_score = raw[0].strip().split(' ')[-1]
+        logging.info('retrieved home score {}'.format(self.home_score))
 
-    @classmethod
-    def getScoreArea(self, _bin_A, template):
+        self.away_score = raw[1].strip().split(' ')[0]
+        logging.info('retrieved away score {}'.format(self.away_score))
 
-        h, w = _bin_A.shape
-        print('_bin_A height: {}, width: {}'.format(h, w))
+        self.match_score = self.home_score + ' : ' + self.away_score
 
-        # deal with width
-        score_area_w = round(w * template.A_score_ratio) + \
-            template.A_score_bleed
-        print('score_area_w: ' + str(score_area_w))
-        score_area_start = round(w/2) - round(score_area_w/2) + 1
-        print('score_area_start: ' + str(score_area_start))
-
-        # remove the bottom black block
-        for i in range(2, len(_bin_A)-1):
-            y = len(_bin_A) - i
-            if sum(sum(_bin_A[y-1:y+1])/len(_bin_A[y])*3) > 1:
-                break
-        sa = _bin_A[0:y]
-
-        return sa[:, score_area_start:score_area_start + score_area_w]
-
-    @classmethod
-    def getScore(self, score_area):
-        return pyt.image_to_string(score_area, config='--psm 7', lang='eng')
+        self.match_result = '{} {} {}'.format(
+            self.home, self.match_result, self.away)
+        logging.info('match result: {}'.format(self.match_result))
