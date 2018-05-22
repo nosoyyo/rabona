@@ -1,5 +1,6 @@
 import logging
 from fuzzywuzzy import process
+from errors import UnknownRawTextError
 
 # init
 logging.basicConfig(
@@ -25,8 +26,11 @@ class RabonaParserA():
                 '\r', '').replace('\n', '').split('-')
             logging.info('accept input json {}'.format(self.raw))
         elif isinstance(_input, str):
-            self.raw = _input.replace('\r', '').replace('\n', '').split('-')
-            logging.info('accept input string {}'.format(self.raw))
+            if self.raw.count('-') == 1:
+                self.raw = _input.replace('\r', '').replace('\n', '').split('-')
+                logging.info('accept input string {}'.format(self.raw))
+            else:
+                raise UnknownRawTextError
 
         self.home = process.extractOne(self.raw[0], all_clubs)[0]
         logging.info('retrieved home name {}'.format(self.home))
