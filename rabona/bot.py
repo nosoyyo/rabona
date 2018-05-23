@@ -2,7 +2,6 @@
 
 import jfw
 import logging
-from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from ri import RabonaImage
@@ -10,7 +9,7 @@ from welcome import Welcome
 from keyboards import Keyboard
 from models.ru import RabonaUser
 from models.rm import RabonaMatch
-from config import rabona_bot_TOKEN as TOKEN
+from utils.config import rabona_bot_TOKEN as TOKEN
 
 
 logging.basicConfig(

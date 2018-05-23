@@ -11,8 +11,8 @@ logging.basicConfig(
 
 
 def loadUID():
-    with open('uid', 'r') as u:
-        return u.read().split(' ')
+    with open('uid', 'r') as tele_user:
+        return tele_user.read().split(' ')
 
 
 uid = loadUID()
@@ -28,14 +28,13 @@ class RabonaUser():
     '''
 
     def __init__(self, tele_user):
-        u = tele_user
-        self.tele_id = str(u.id)
+        self.tele_id = str(tele_user.id)
         self.dir = 'data/users/' + self.tele_id + '/'
-        if 'username' in u.__dict__.keys():
-            self.tele_username = u.username
-        self.tele_lang = u.language_code
-        self.first_name = u.first_name
-        self.last_name = u.last_name
+        if 'username' in tele_user.__dict__.keys():
+            self.tele_username = tele_user.username
+        self.tele_lang = tele_user.language_code
+        self.first_name = tele_user.first_name
+        self.last_name = tele_user.last_name
         if self.last_name:
             self.title = self.last_name + '师'
         else:
@@ -43,10 +42,10 @@ class RabonaUser():
         self.is_new = self.aloha()
 
     def aloha(self):
-        global uid
+
         if self.tele_id not in uid:
-            with open('uid', 'a') as u:
-                u.write(self.tele_id + ' ')
+            with open('uid', 'a') as f:
+                f.write(self.tele_id + ' ')
             uid = loadUID()
             os.makedirs('data/users/' + self.tele_id)
             os.makedirs(self.dir + 'matches')

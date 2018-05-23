@@ -1,5 +1,8 @@
 import logging
+from bson.objectid import ObjectId
 from fuzzywuzzy import process
+
+from utils.pipeline import MongoDBPipeline
 from errors import UnknownRawTextError
 
 # init
@@ -8,10 +11,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 
-
+'''
 with open('data/leagues/all_clubs', 'r') as f:
     all_clubs = f.readlines()
 all_clubs = [club.replace('\n', '') for club in all_clubs]
+'''
+
 logging.info('{} club names loaded.'.format(len(all_clubs)))
 
 
@@ -21,6 +26,9 @@ class RabonaParserA():
     '''
 
     def __init__(self, _input):
+        oid = ObjectId('5b04fae13c755aa7ea90d98e')
+        m = MongoDBPipeline()
+        self.all_clubs = [v for v in m.ls(oid,'all_clubs').values()]
         if isinstance(_input, dict):
             self.raw = _input['ParsedResults'][0]['ParsedText'].replace(
                 '\r', '').replace('\n', '').split('-')
