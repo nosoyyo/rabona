@@ -42,3 +42,4 @@ def anchors(self):
     if anchors_cv and anchors_fr:
         rect_cv, rect_fr = makeRect(
             anchors_cv, 'cv'), makeRect(anchors_fr, 'fr')
+        print(rect_cv, rect_fr)

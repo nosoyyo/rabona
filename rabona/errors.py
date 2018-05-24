@@ -10,3 +10,7 @@ class InitFailure(Exception):
             print('anchors={}: should be 2'.format(msg))
         elif code is 4:
             print('cannot get anchor! ')
+
+
+class UnknownRawTextError(Exception):
+    pass

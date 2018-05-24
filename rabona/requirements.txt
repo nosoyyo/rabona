@@ -2,6 +2,7 @@ arrow
 numpy
 # cv2
 apistar
+pymongo
 telegram
 fuzzywuzzy
 pytesseract
