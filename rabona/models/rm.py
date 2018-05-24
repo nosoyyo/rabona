@@ -6,7 +6,8 @@ import logging
 logging.basicConfig(
     filename='log/match.log',
     level=logging.INFO,
-    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
 
 
 class RabonaMatch():

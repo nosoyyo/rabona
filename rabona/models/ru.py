@@ -1,59 +1,65 @@
-import os
 import arrow
 import logging
+
+from .base import RabonaModel
 
 
 # init
 logging.basicConfig(
     filename='log/user.log',
     level=logging.INFO,
-    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
 
 
-def loadUID():
-    with open('uid', 'r') as tele_user:
-        return tele_user.read().split(' ')
-
-
-uid = loadUID()
-logging.info('{} users loaded.'.format(len(uid)))
-
-
-class RabonaUser():
+class RabonaUser(RabonaModel):
     '''
     for now, an RabonaUser is just a Telegram user.
+    in future, RabonaUser will mostly deal with runtime stuff.
 
     :param tele_user: `obj` telegram effective_user object
     :attr tele_id: `str` user's telegram id
     '''
 
-    def __init__(self, tele_user):
-        self.tele_id = str(tele_user.id)
-        self.dir = 'data/users/' + self.tele_id + '/'
-        if 'username' in tele_user.__dict__.keys():
-            self.tele_username = tele_user.username
-        self.tele_lang = tele_user.language_code
-        self.first_name = tele_user.first_name
-        self.last_name = tele_user.last_name
-        if self.last_name:
-            self.title = self.last_name + '师'
-        else:
-            self.title = self.first_name + '师'
-        self.is_new = self.aloha()
+    def __init__(self, tele_user=None):
+        self.m = super(RabonaUser, self).m
+        self.col = 'users'
+
+        if tele_user:
+            self.tele_user = tele_user
+            self.tele_id = self.tele_user.id
+
+        self.is_new = self._is_new()
+        self.aloha()
+
+    def _is_new(self):
+        query = {'tele_id': self.tele_id}
+        result = bool(self.m.ls(query, 'users')) or False
+        print(result)
+        return result
 
     def aloha(self):
 
-        if self.tele_id not in uid:
-            with open('uid', 'a') as f:
-                f.write(self.tele_id + ' ')
-            uid = loadUID()
-            os.makedirs('data/users/' + self.tele_id)
-            os.makedirs(self.dir + 'matches')
+        if self.is_new:
+            self.tele_id = self.tele_user.id
+            self.first_name = self.tele_user.first_name
+            if self.tele_user.last_name:
+                self.last_name = self.tele_user.last_name
+            if self.tele_user.username:
+                self.username = self.tele_user.username
+            self.save()
             logging.info('aloha! new user {}'.format(self.tele_id))
             return True
         else:
+            self.__dict__ = self.load()
             logging.info('aloha! user {} seen again.'.format(self.tele_id))
             return False
+
+    def load(self):
+        __dict__ = self.m.ls({'tele_id': self.tele_id}, 'users')[0]
+        if 'ObjectId' not in self.__dict__.keys():
+            self.ObjectId = __dict__['_id']
+        return __dict__
 
     def savePhoto(self, bot, photo_file):
         filename = self.dir + \
