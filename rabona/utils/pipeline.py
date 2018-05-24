@@ -70,7 +70,6 @@ class MongoDBPipeline():
                 col = self.setCol(_col)
             else:
                 raise InvalidCollectionError(_col)
-            logging.info('input col "{}" => output col "{}"'.format(_col, col))
             return col
         except Exception as e:
             print(e)

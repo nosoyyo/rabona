@@ -18,29 +18,28 @@ class RabonaUser(RabonaModel):
     in future, RabonaUser will mostly deal with runtime stuff.
 
     :param tele_user: `obj` telegram effective_user object
-    :attr tele_id: `str` user's telegram id
+    :attr tele_id: `int` user's telegram id
     '''
+
+    col = 'users'
 
     def __init__(self, tele_user=None):
         self.m = super(RabonaUser, self).m
-        self.col = 'users'
+        self.is_new = None
+        # self.field_types.append()
 
         if tele_user:
             self.tele_user = tele_user
             self.tele_id = self.tele_user.id
 
-        self.is_new = self._is_new()
         self.aloha()
 
-    def _is_new(self):
-        query = {'tele_id': self.tele_id}
-        result = bool(self.m.ls(query, 'users')) or False
-        print(result)
-        return result
-
     def aloha(self):
+        query = {'tele_id': self.tele_id}
+        self.is_new = not bool(self.m.ls(query, 'users'))
+        print('is new: {}'.format(self.is_new))
 
-        if self.is_new:
+        if self.is_new is True:
             self.tele_id = self.tele_user.id
             self.first_name = self.tele_user.first_name
             if self.tele_user.last_name:
@@ -49,17 +48,9 @@ class RabonaUser(RabonaModel):
                 self.username = self.tele_user.username
             self.save()
             logging.info('aloha! new user {}'.format(self.tele_id))
-            return True
         else:
-            self.__dict__ = self.load()
+            self.__dict__ = self.load(self.tele_id)
             logging.info('aloha! user {} seen again.'.format(self.tele_id))
-            return False
-
-    def load(self):
-        __dict__ = self.m.ls({'tele_id': self.tele_id}, 'users')[0]
-        if 'ObjectId' not in self.__dict__.keys():
-            self.ObjectId = __dict__['_id']
-        return __dict__
 
     def savePhoto(self, bot, photo_file):
         filename = self.dir + \
