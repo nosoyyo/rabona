@@ -25,8 +25,6 @@ class RabonaUser(RabonaModel):
 
     def __init__(self, tele_user=None):
         self.m = super(RabonaUser, self).m
-        self.is_new = None
-        # self.field_types.append()
 
         if tele_user:
             self.tele_user = tele_user
@@ -36,20 +34,23 @@ class RabonaUser(RabonaModel):
 
     def aloha(self):
         query = {'tele_id': self.tele_id}
-        self.is_new = not bool(self.m.ls(query, 'users'))
-        print('is new: {}'.format(self.is_new))
+        is_new = not bool(self.m.ls(query, 'users'))
+        print('is new: {}'.format(is_new))
 
-        if self.is_new is True:
+        if is_new is True:
             self.tele_id = self.tele_user.id
             self.first_name = self.tele_user.first_name
             if self.tele_user.last_name:
                 self.last_name = self.tele_user.last_name
             if self.tele_user.username:
                 self.username = self.tele_user.username
-            self.save()
+
+            self.save(self.tele_id)
             logging.info('aloha! new user {}'.format(self.tele_id))
         else:
-            self.__dict__ = self.load(self.tele_id)
+            retrieval = self.load(self.tele_id)
+            self.__dict__ = retrieval
+            self.ObjectId = retrieval['_id']
             logging.info('aloha! user {} seen again.'.format(self.tele_id))
 
     def savePhoto(self, bot, photo_file):

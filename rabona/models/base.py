@@ -30,7 +30,7 @@ class RabonaModel():
         for i in range(len(_dict)):
             self.__setattr__(ks[i], vs[i])
 
-    def save(self, oid=None, col=None):
+    def save(self, oid: ObjectId=None, col: str=None) -> bool:
         '''
         scene 0: init saving for new obj
         scene 1: update for existed obj
@@ -56,14 +56,29 @@ class RabonaModel():
             elif oid:
                 oid = oid
             result = self.m.update(oid, doc, col)
+
             logging.info('doc {} updated in {}'.format(doc, col))
             return result
         else:
-            if 'ObjectId' not in doc.keys() and doc != self.m.ls(doc):
-                self.ObjectId = self.m.insert(doc, col)
-                logging.info('doc {} inserted in {}'.format(doc, col))
+            print(doc)
+            if 'ObjectId' not in doc.keys() and doc != self.m.ls(doc, col):
+                result = self.m.insert(doc, col) or False
+                print(result)
+                if isinstance(result, ObjectId):
+                    self.ObjectId = result
+                    logging.info('doc {} inserted in {}'.format(doc, col))
+                return bool(result)
+            else:
+                return False
 
-    def load(self, some_id=None):
+    def load(self, some_id=None, col=None):
+
+        if not col:
+            if self.col:
+                col = self.col
+            else:
+                col = self.m.col
+
         try:
             if not some_id:
                 if 'ObjectId' not in self.__dict__.keys():
@@ -80,7 +95,8 @@ class RabonaModel():
 
             logging.info('querying key: {}, value: {}'.format(
                 query_key, query_value))
-            retrieval = self.m.ls({query_key: query_value}, self.col)
+            retrieval = self.m.ls({query_key: query_value}, col)
+            print(1)
 
             if isinstance(retrieval, list):
                 __dict__ = retrieval[0]
@@ -88,7 +104,8 @@ class RabonaModel():
                 __dict__ = retrieval
 
             if 'ObjectId' not in self.__dict__.keys():
-                self.ObjectId = __dict__['_id']
+                if isinstance(__dict__['_id'], ObjectId):
+                    self.ObjectId = __dict__['_id']
             return __dict__
 
         except AttributeError:

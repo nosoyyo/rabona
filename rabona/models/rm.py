@@ -1,6 +1,8 @@
 import os
-import pickle
 import logging
+
+from .base import RabonaModel
+
 
 # init
 logging.basicConfig(
@@ -10,24 +12,21 @@ logging.basicConfig(
     %(message)s')
 
 
-class RabonaMatch():
+class RabonaMatch(RabonaModel):
     '''
 
     :param data: `obj` ri.A_parsed, a RabonaParserA object
     :param user: `obj` a RabonaUser object.
     '''
+    col = 'matches'
 
-    def __init__(self, _id='', user=None, data=None):
-        self.dir = user.dir + 'matches/'
-        if not _id:
-            self.id = len(os.listdir(self.dir)) + 1
-            self.id_str = str(self.id)
-        elif str(_id).isdigit():
-            self.id = int(_id)
-            self.id_str = str(_id)
-            with open(self.dir + self.id_str, 'r') as f:
-                m = pickle.load(f)
-            self.__dict__ = m.__dict__
+    def __init__(self, user, oid=None, data=None):
+        self.user = user
+        self.user_oid = user.ObjectId
+        if not oid and not data:
+            self.save()
+        elif str(oid).isdigit():
+            self.__dict__ = self.load(oid)
             logging.info('RabonaMatch object #{} set up.'.format(self.id))
 
         if data:
@@ -39,16 +38,11 @@ class RabonaMatch():
             self.motm_rating = ''
             self.facts = ''
 
-    def persistize(self):
-        with open(self.dir + self.id_str, 'wb') as f:
-            pickle.dump(self, f)
-        logging.info('RabonaMatch object #{} pesistized'.format(self.id))
-
     @classmethod
     def getLastMatch(self, user):
         '''
         :param user: `obj` RabonaUser object
         '''
         match_dir = user.dir + 'matches/'
-        _id = len(os.listdir(match_dir))
-        return RabonaMatch(_id=_id, user=user)
+        oid = len(os.listdir(match_dir))
+        return RabonaMatch(oid=oid, user=user)
