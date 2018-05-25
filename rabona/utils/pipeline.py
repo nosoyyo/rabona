@@ -3,32 +3,31 @@
 # @absurdity @real
 __author__ = 'nosoyyo'
 
-
-# usage
-#
-# from web to qiniu:
-# q = QiniuPipeline()
-# pic_url = 'http://some.pic.url'
-# ret = q.upload(pic_url)
-#
-# from qiniu to distribution:
-# q = QiniuPipeline()
-# downloadable_file_url = q.getFile(key)
-
 # 1801?? 0.1 basically setup
 # 1802?? 0.2 base class changed into singleton mode; added user/pwd auth;
 # 180523 0.3 removed singleton mode, added basic CRUD method wrappers
 
+import os
 import logging
 import pymongo
 from bson.objectid import ObjectId
 from pymongo.collection import Collection
 
-from .config import MongoConf, QiniuConf
 from .exceptions import InvalidCollectionError
 
 
+settings = {}
+settings['MONGODB_SERVER'] = os.environ.get('RABONA_MONGODB_SERVER')
+settings['MONGODB_PORT'] = int(os.environ.get('RABONA_MONGODB_PORT'))
+settings['MONGODB_USERNAME'] = os.environ.get('RABONA_MONGODB_USERNAME')
+settings['MONGODB_PASSWORD'] = os.environ.get('RABONA_MONGODB_PASSWORD')
+settings['MONGODB_RABONA_DB'] = 'rabona'
+settings['MONGODB_INIT_COL'] = 'testcol'
+
 # init
+if 'log' not in os.listdir():
+    os.mkdir('log')
+
 logging.basicConfig(
     filename='log/mongodb.log',
     level=logging.INFO,
@@ -39,7 +38,6 @@ logging.basicConfig(
 # MongoDB quickstart
 # ==================
 class MongoDBPipeline():
-    settings = MongoConf.__dict__
     client = pymongo.MongoClient(
         settings['MONGODB_SERVER'],
         settings['MONGODB_PORT'],
@@ -77,10 +75,10 @@ class MongoDBPipeline():
     def insert(self, doc, col=None):
         col = self.dealWithCol(col)
         try:
-            result = col.insert(doc)
-            if isinstance(result, ObjectId):
+            oid = col.insert_one(doc).inserted_id
+            if isinstance(oid, ObjectId):
                 logging.info('doc {} inserted into {}'.format(doc, col.name))
-                return result
+                return oid
         except Exception as e:
             print(e)
             return False
@@ -94,7 +92,7 @@ class MongoDBPipeline():
             col = self.dealWithCol(arg)
             print('listing collection "{}"'.format(col.name))
             return [item for item in col.find()]
-        elif isinstance(arg, int):
+        elif isinstance(arg, int) and col is None:
             col = self.ls()[arg]
             return self.ls(col)
         elif isinstance(arg, dict):
@@ -107,14 +105,11 @@ class MongoDBPipeline():
         col = self.dealWithCol(col)
 
         try:
-            doc_origin = self.ls(oid, col)
-            ks, vs = [k for k in doc.keys()], [
-                v for v in doc.values()]
-            for i in range(len(doc)):
-                doc_origin[ks[i]] = vs[i]
-
-            result = bool(col.update(
-                {'_id': oid}, doc_origin, upsert=False)['n']) or False
+            result = bool(col.update_one(
+                {'_id': oid},
+                {"$set": doc},
+                upsert=False
+            ).raw_result['nModified']) or False
             logging.info('updating {} in {}, result[{}]'.format(
                 doc, col.name, result))
             return result
@@ -151,52 +146,3 @@ class MongoDBPipeline():
                 return False
         else:
             return False
-
-
-# ================
-# Qiniu quickstart
-# ================
-
-class QiniuPipeline():
-
-    # import
-    from qiniu import Auth, BucketManager, put_file, etag, urlsafe_base64_encode
-    import qiniu.config
-
-    def __init__(self):
-        self.settings = QiniuConf.__annotations__
-        self.m = MongoDBPipeline()
-        self.m_auth = self.m.auth
-        self.access_key = self.settings['QINIU_ACCESS_KEY']
-        self.secret_key = self.settings['QINIU_SECRET_KEY']
-
-        # 构建鉴权对象
-        self.auth = self.Auth(self.access_key, self.secret_key)
-
-        # bucket
-        self.bucket = BucketManager(self.auth)
-
-        # 要上传的空间
-        self.bucket_name = self.settings['QINIU_BUCKET_NAME']
-
-        # 上传到七牛后保存的文件名前缀
-        self.prefix = 'rabona'
-
-    def upload(self, pic_url):
-        bucket_name = self.bucket_name
-        key = pic_url.split('/')[-1]
-        token = self.auth.upload_token(bucket_name, key, 0)
-        ret = self.bucket.fetch(pic_url, bucket_name, key)
-        return ret
-
-    def getFile(self, key):
-        url = self.auth.private_download_url(self.settings['QINIU_URL'] + key)
-        return url
-
-    def ls(self):
-        l = self.bucket.list(self.bucket_name)[0]['items']
-        return l
-
-    def count(self):
-        c = len(self.bucket.list(self.bucket_name)[0]['items'])
-        return c

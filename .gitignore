@@ -2,6 +2,8 @@
 
 archived/
 config.py
+.vscode/
+utils/futbin.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -107,4 +109,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-utils/futbin.py
