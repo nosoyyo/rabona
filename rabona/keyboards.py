@@ -1,24 +1,40 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-# main menu
-main_menu_kb = [[InlineKeyboardButton("上传战果", callback_data='upload'),
-                 InlineKeyboardButton("手动输入", callback_data='raw_input'), ],
-                [InlineKeyboardButton("查看战绩", callback_data='results')],
-                [InlineKeyboardButton("赛事", callback_data='events')]]
-
-main_menu_markup = InlineKeyboardMarkup(main_menu_kb)
-
-# general cancel
-cancel_kb = [[InlineKeyboardButton("算了", callback_data='cancel')]]
-cancel_markup = InlineKeyboardMarkup(cancel_kb)
-
-
-# result confirmation
-confirmation_kb = [[InlineKeyboardButton("没毛病", callback_data='correct'),
-                    InlineKeyboardButton("有毛病", callback_data='wrong')],
-                   [InlineKeyboardButton("算了", callback_data='cancel')]]
-confirmation_markup = InlineKeyboardMarkup(confirmation_kb)
+from telegram import ReplyKeyboardMarkup, KeyboardButton
 
 
 class Keyboard():
-    pass
+    '''
+    For conveniently create keyboards.
+
+    :param buttons: `list` something like [button0,[button1, button2],button3]
+    '''
+
+    main_menu_cn = [["🚀快速开始"], ["📈我的战报"], ["❕ 挑战"], ["🏆 赛事"], ["⚙️ 设置"]]
+    cancel_cn = [["😂 算了"]]
+    back_cn = ["🔙 返回"]
+    comp_cn = [["✏️创建赛事", "🏆我的赛事"], back_cn]
+    quickstart_cn = [["📷 传图", "📝 手记"], back_cn]
+    settings_cn = [["🇨🇳 主队"], back_cn]
+
+    def __init__(self, buttons: list=None, mode: str='reply'):
+        self.previous_keyboard = ''
+        self.current_keyboard = ''
+        self.keyboard_to_send = ''
+
+        if mode is 'reply':
+            if buttons:
+                for item in buttons:
+                    if isinstance(item, list):
+                        for atom in item:
+                            atom = KeyboardButton(atom)
+                    else:
+                        item = KeyboardButton(item)
+
+                self.markup = ReplyKeyboardMarkup(buttons)
+
+    @classmethod
+    def handler(self, bot, update):
+        if update.message == :
+
+
+main_menu_markup = Keyboard(Keyboard.main_menu_cn).markup
+cancel_markup = Keyboard(Keyboard.cancel_cn).markup

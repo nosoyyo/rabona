@@ -80,7 +80,7 @@ class MongoDBPipeline():
                 logging.info('doc {} inserted into {}'.format(doc, col.name))
                 return oid
         except Exception as e:
-            print('pipeline.insert raises {}'.format(e))
+            logging.error('pipeline.insert() raises {}'.format(e))
 
     def ls(self, arg=None, col=None):
         col = self.dealWithCol(col)

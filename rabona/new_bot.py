@@ -6,6 +6,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from ri import RabonaImage
 from welcome import Welcome
+from menu import MainMenu
 from keyboards import Keyboard
 from models.ru import RabonaUser
 from models.rm import RabonaMatch
@@ -19,20 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def start(bot, update):
-    user = RabonaUser(update.effective_user)
-    welcome = Welcome(user)
-    message = welcome.output
-    keyboard = welcome.keyboard
-    update.message.reply_text(message, reply_markup=keyboard)
-
-
-def handler(bot, update):
-    pass
-
-
 def ocr(bot, update):
-    bot.send_message(update.effective_user.id, '牛逼。我看一下啊。')
+    bot.sendChatAction(update.effective_user.id, 'typing')
     user = RabonaUser(update.message.from_user)
     photo_file = bot.get_file(update.message.photo[-1].file_id)
     local_file_name = user.savePhoto(bot, photo_file)
@@ -61,9 +50,9 @@ def main():
     # Create the Updater and pass it your bot's token.
     updater = Updater(TOKEN)
 
-    updater.dispatcher.add_handler(CommandHandler('start', start))
+    updater.dispatcher.add_handler(CommandHandler('start', MainMenu.start))
     updater.dispatcher.add_handler(MessageHandler(
-        (Filters.photo | Filters.text), handler))
+        (Filters.photo | Filters.text), Keyboard.handler))
     updater.dispatcher.add_handler(CommandHandler('help', help))
     updater.dispatcher.add_error_handler(error)
 
