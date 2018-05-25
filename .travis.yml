@@ -11,7 +11,5 @@ python:
   - "3.7-dev"  # 3.7 development branch
 install:
     - pip install -r requirements.txt
-before-script:
-    - cd rabona
 script:
-    - python -m unittest tests.tests
+    - python -m unittest rabona.tests.tests
