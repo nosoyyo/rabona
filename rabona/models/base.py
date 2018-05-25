@@ -37,14 +37,11 @@ class RabonaModel():
 
         :param oid: 'obj' bson.objectid.ObjecdId object.
         '''
-        print(self.col)
+
         if not col:
             if self.col:
-                print('self.col assured')
                 col = self.col
-                print(col)
             else:
-                print('no self.col??!')
                 col = self.m.col
 
         doc_original = [list(item) for item in self.__dict__.items()]
@@ -58,8 +55,9 @@ class RabonaModel():
                 oid = self.ObjectId
             elif oid:
                 oid = oid
-            self.m.update(oid, doc, col)
+            result = self.m.update(oid, doc, col)
             logging.info('doc {} updated in {}'.format(doc, col))
+            return result
         else:
             if 'ObjectId' not in doc.keys() and doc != self.m.ls(doc):
                 self.ObjectId = self.m.insert(doc, col)

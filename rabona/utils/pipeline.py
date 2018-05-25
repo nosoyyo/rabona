@@ -77,10 +77,10 @@ class MongoDBPipeline():
     def insert(self, doc, col=None):
         col = self.dealWithCol(col)
         try:
-            result = col.insert(doc)
-            if isinstance(result, ObjectId):
+            oid = col.insert_one(doc).inserted_id
+            if isinstance(oid, ObjectId):
                 logging.info('doc {} inserted into {}'.format(doc, col.name))
-                return result
+                return oid
         except Exception as e:
             print(e)
             return False
@@ -94,7 +94,7 @@ class MongoDBPipeline():
             col = self.dealWithCol(arg)
             print('listing collection "{}"'.format(col.name))
             return [item for item in col.find()]
-        elif isinstance(arg, int):
+        elif isinstance(arg, int) and col is None:
             col = self.ls()[arg]
             return self.ls(col)
         elif isinstance(arg, dict):
@@ -107,14 +107,11 @@ class MongoDBPipeline():
         col = self.dealWithCol(col)
 
         try:
-            doc_origin = self.ls(oid, col)
-            ks, vs = [k for k in doc.keys()], [
-                v for v in doc.values()]
-            for i in range(len(doc)):
-                doc_origin[ks[i]] = vs[i]
-
-            result = bool(col.update(
-                {'_id': oid}, doc_origin, upsert=False)['n']) or False
+            result = bool(col.update_one(
+                {'_id': oid},
+                {"$set": doc},
+                upsert=False
+            ).raw_result['nModified']) or False
             logging.info('updating {} in {}, result[{}]'.format(
                 doc, col.name, result))
             return result
