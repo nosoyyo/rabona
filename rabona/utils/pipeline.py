@@ -58,7 +58,7 @@ class MongoDBPipeline():
             self.db = self.client.get_database(dbname)
         return self.db.get_collection(colname)
 
-    def dealWithCol(self, _col=None):
+    def dealWithCol(self, _col=None) -> Collection:
         try:
             if not _col:
                 col = self.col
@@ -72,7 +72,7 @@ class MongoDBPipeline():
         except Exception as e:
             print(e)
 
-    def insert(self, doc, col=None):
+    def insert(self, doc: dict, col: str=None) -> ObjectId:
         col = self.dealWithCol(col)
         try:
             oid = col.insert_one(doc).inserted_id
@@ -80,8 +80,7 @@ class MongoDBPipeline():
                 logging.info('doc {} inserted into {}'.format(doc, col.name))
                 return oid
         except Exception as e:
-            print(e)
-            return False
+            print('pipeline.insert raises {}'.format(e))
 
     def ls(self, arg=None, col=None):
         col = self.dealWithCol(col)
@@ -101,18 +100,26 @@ class MongoDBPipeline():
         elif isinstance(arg, ObjectId):
             return col.find_one({'_id': arg})
 
-    def update(self, oid, doc, col=None):
+    def update(self, oid: ObjectId, doc: dict, col: str=None) -> bool:
         col = self.dealWithCol(col)
 
         try:
-            result = bool(col.update_one(
-                {'_id': oid},
-                {"$set": doc},
-                upsert=False
-            ).raw_result['nModified']) or False
-            logging.info('updating {} in {}, result[{}]'.format(
-                doc, col.name, result))
-            return result
+            result = col.update_one({'_id': oid}, {"$set": doc},)
+            if result.modified_count:
+                logging.info('updated {} in {}, result[{}]'.format(
+                    doc, col.name, result))
+                boolean = True
+            else:
+                if result.matched_count:
+                    logging.info('{} not updated in {}, input same to output.'.format(
+                        doc, col.name, result))
+                    boolean = False
+                else:
+                    logging.info('{} not updated in {}, nothing matches input.'.format(
+                        doc, col.name, result))
+                    boolean = False
+
+            return boolean
         except Exception as e:
             print(e)
             return False
