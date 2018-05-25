@@ -25,6 +25,9 @@ settings['MONGODB_RABONA_DB'] = 'rabona'
 settings['MONGODB_INIT_COL'] = 'testcol'
 
 # init
+if 'log' not in os.listdir():
+    os.mkdir('log')
+
 logging.basicConfig(
     filename='log/mongodb.log',
     level=logging.INFO,
