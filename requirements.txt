@@ -3,8 +3,8 @@ arrow
 # cv2
 # apistar
 pymongo
-# telegram
 # fuzzywuzzy
 # pytesseract
 # face-recognition
 # python-Levenshtein
+python-telegram-bot
