@@ -5,7 +5,6 @@ import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from ri import RabonaImage
-from welcome import Welcome
 from menu import MainMenu
 from keyboards import Keyboard
 from models.ru import RabonaUser

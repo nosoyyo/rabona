@@ -1,4 +1,5 @@
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram import (ReplyKeyboardMarkup, KeyboardButton,
+                      InlineKeyboardButton, InlineKeyboardMarkup)
 
 
 class Keyboard():
@@ -8,38 +9,44 @@ class Keyboard():
     :param buttons: `list` something like [button0,[button1, button2],button3]
     '''
 
-    main_menu_cn = [["🚀快速开始"], ["📈我的战报"], ["❕ 挑战"], ["🏆 赛事"], ["⚙️ 设置"]]
-    quickstart_cn = [["📷 传图", "📝 手记"], back_cn]
-    
-    # competition
-    comp_cn_0 = [["✏️创建赛事", "🏆我的赛事"], back_cn]
-    # create competition
-    comp_cn_1 = []
-    
-    settings_cn = [["🛡 主队"], ["🇨🇳 语言/Language🇬🇧"], back_cn]
-    back_cn = ["🔙 返回"]
     cancel_cn = [["😂 算了"]]
 
-    def __init__(self, buttons: list=None, mode: str='reply'):
+    digits_only = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['0']]
+    back = ["↩️ 返回"]
+    
+
+    # competition
+    comp_cn_0 = [["✏️创建赛事", "🏆我的赛事"], back]
+    # create competition
+    comp_cn_1 = []
+
+    def __init__(self, buttons: list=None, ruser=None):
+
+        self.makeButton = KeyboardButton
+        self.makeInlineButton = InlineKeyboardButton
         self.previous_keyboard = ''
         self.current_keyboard = ''
         self.keyboard_to_send = ''
 
-        if mode is 'reply':
-            if buttons:
-                for item in buttons:
-                    if isinstance(item, list):
-                        for atom in item:
-                            atom = KeyboardButton(atom)
-                    else:
-                        item = KeyboardButton(item)
+        if buttons:
+            inline = []
+            for item in buttons:
+                if isinstance(item, list):
+                    inline_item = []
+                    for atom in item:
+                        inline_item.append(InlineKeyboardButton(
+                            atom, callback_data=atom))
+                        atom = KeyboardButton(atom)
+                    inline.append(inline_item)
+                else:
+                    inline.append(InlineKeyboardButton(
+                        item, callback_data=item))
+                    item = KeyboardButton(item)
 
-                self.markup = ReplyKeyboardMarkup(buttons)
+            self.inline = InlineKeyboardMarkup(inline)
+            self.reply = ReplyKeyboardMarkup(buttons)
 
     @classmethod
     def handler(self, bot, update):
-        if update.message ==:
-
-
-main_menu_markup = Keyboard(Keyboard.main_menu_cn).markup
-cancel_markup = Keyboard(Keyboard.cancel_cn).markup
+        if update.message == 's':
+            pass

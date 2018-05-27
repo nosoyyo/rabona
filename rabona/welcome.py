@@ -1,6 +1,3 @@
-from keyboards import main_menu_markup
-
-
 class Welcome():
     def __init__(self, ruser):
         '''
@@ -9,4 +6,3 @@ class Welcome():
         :param ruser: `obj` A RabonaUser object
         '''
         self.message = 'rabona serves you.'
-        self.keyboard = main_menu_markup
