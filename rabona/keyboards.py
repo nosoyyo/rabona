@@ -1,24 +1,52 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-# main menu
-main_menu_kb = [[InlineKeyboardButton("上传战果", callback_data='upload'),
-                 InlineKeyboardButton("手动输入", callback_data='raw_input'), ],
-                [InlineKeyboardButton("查看战绩", callback_data='results')],
-                [InlineKeyboardButton("赛事", callback_data='events')]]
-
-main_menu_markup = InlineKeyboardMarkup(main_menu_kb)
-
-# general cancel
-cancel_kb = [[InlineKeyboardButton("算了", callback_data='cancel')]]
-cancel_markup = InlineKeyboardMarkup(cancel_kb)
-
-
-# result confirmation
-confirmation_kb = [[InlineKeyboardButton("没毛病", callback_data='correct'),
-                    InlineKeyboardButton("有毛病", callback_data='wrong')],
-                   [InlineKeyboardButton("算了", callback_data='cancel')]]
-confirmation_markup = InlineKeyboardMarkup(confirmation_kb)
+from telegram import (ReplyKeyboardMarkup, KeyboardButton,
+                      InlineKeyboardButton, InlineKeyboardMarkup)
 
 
 class Keyboard():
-    pass
+    '''
+    For conveniently create keyboards.
+
+    :param buttons: `list` something like [button0,[button1, button2],button3]
+    '''
+
+    cancel_cn = [["😂 算了"]]
+
+    digits_only = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['0']]
+    back = ["↩️ 返回"]
+    
+
+    # competition
+    comp_cn_0 = [["✏️创建赛事", "🏆我的赛事"], back]
+    # create competition
+    comp_cn_1 = []
+
+    def __init__(self, buttons: list=None, ruser=None):
+
+        self.makeButton = KeyboardButton
+        self.makeInlineButton = InlineKeyboardButton
+        self.previous_keyboard = ''
+        self.current_keyboard = ''
+        self.keyboard_to_send = ''
+
+        if buttons:
+            inline = []
+            for item in buttons:
+                if isinstance(item, list):
+                    inline_item = []
+                    for atom in item:
+                        inline_item.append(InlineKeyboardButton(
+                            atom, callback_data=atom))
+                        atom = KeyboardButton(atom)
+                    inline.append(inline_item)
+                else:
+                    inline.append(InlineKeyboardButton(
+                        item, callback_data=item))
+                    item = KeyboardButton(item)
+
+            self.inline = InlineKeyboardMarkup(inline)
+            self.reply = ReplyKeyboardMarkup(buttons)
+
+    @classmethod
+    def handler(self, bot, update):
+        if update.message == 's':
+            pass

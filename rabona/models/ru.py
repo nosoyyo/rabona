@@ -29,6 +29,7 @@ class RabonaUser(RabonaModel):
         if tele_user:
             self.tele_user = tele_user
             self.tele_id = self.tele_user.id
+            self.appellation = self.tele_user.full_name
 
         self.aloha()
 

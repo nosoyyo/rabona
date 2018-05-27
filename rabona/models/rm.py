@@ -1,5 +1,6 @@
 import os
 import logging
+from bson.objectid import ObjectId
 
 from .base import RabonaModel
 
@@ -15,17 +16,20 @@ logging.basicConfig(
 class RabonaMatch(RabonaModel):
     '''
 
+    :method load(oid): load a RabonaMatch obj from ObjectId.
+    :method save(): save a RabonaMatch obj into MongoDB.
     :param data: `obj` ri.A_parsed, a RabonaParserA object
+
     :param user: `obj` a RabonaUser object.
     '''
     col = 'matches'
 
-    def __init__(self, user, oid=None, data=None):
+    def __init__(self, user, oid: ObjectId=None, data: object=None):
         self.user = user
         self.user_oid = user.ObjectId
         if not oid and not data:
             self.save()
-        elif str(oid).isdigit():
+        elif isinstance(oid, ObjectId):
             self.__dict__ = self.load(oid)
             logging.info('RabonaMatch object #{} set up.'.format(self.id))
 
@@ -37,6 +41,7 @@ class RabonaMatch(RabonaModel):
             self.motm = ''
             self.motm_rating = ''
             self.facts = ''
+            self.save()
 
     @classmethod
     def getLastMatch(self, user):
