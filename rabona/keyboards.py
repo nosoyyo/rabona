@@ -9,11 +9,16 @@ class Keyboard():
     '''
 
     main_menu_cn = [["🚀快速开始"], ["📈我的战报"], ["❕ 挑战"], ["🏆 赛事"], ["⚙️ 设置"]]
-    cancel_cn = [["😂 算了"]]
-    back_cn = ["🔙 返回"]
-    comp_cn = [["✏️创建赛事", "🏆我的赛事"], back_cn]
     quickstart_cn = [["📷 传图", "📝 手记"], back_cn]
-    settings_cn = [["🇨🇳 主队"], back_cn]
+    
+    # competition
+    comp_cn_0 = [["✏️创建赛事", "🏆我的赛事"], back_cn]
+    # create competition
+    comp_cn_1 = []
+    
+    settings_cn = [["🛡 主队"], ["🇨🇳 语言/Language🇬🇧"], back_cn]
+    back_cn = ["🔙 返回"]
+    cancel_cn = [["😂 算了"]]
 
     def __init__(self, buttons: list=None, mode: str='reply'):
         self.previous_keyboard = ''
@@ -33,7 +38,7 @@ class Keyboard():
 
     @classmethod
     def handler(self, bot, update):
-        if update.message == :
+        if update.message ==:
 
 
 main_menu_markup = Keyboard(Keyboard.main_menu_cn).markup
