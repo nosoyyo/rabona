@@ -14,3 +14,8 @@ class InitFailure(Exception):
 
 class UnknownRawTextError(Exception):
     pass
+
+
+class HandlerInitError(Exception):
+    def __init__(self, nb: int, nf: int):
+        print('{} buttons need {} handlers, got {}!'.format(nb, nb, nf))

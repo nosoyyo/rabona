@@ -2,13 +2,12 @@
 
 import jfw
 import logging
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import (Updater, CommandHandler,
+                          MessageHandler, Filters, CallbackQueryHandler)
 
 from ri import RabonaImage
-from welcome import Welcome
-from keyboards import Keyboard
-from models.ru import RabonaUser
-from models.rm import RabonaMatch
+from views import Keyboard, Welcome
+from models import RabonaUser, RabonaMatch
 from utils.config import rabona_bot_TOKEN as TOKEN
 
 
@@ -65,6 +64,7 @@ def main():
     updater.dispatcher.add_handler(MessageHandler(
         (Filters.photo | Filters.text), handler))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CallbackQueryHandler())
     updater.dispatcher.add_error_handler(error)
 
     # Start the Bot
