@@ -1,4 +1,5 @@
 import logging
+from functools import reduce
 from telegram import (ReplyKeyboardMarkup, KeyboardButton,
                       InlineKeyboardButton, InlineKeyboardMarkup)
 
@@ -27,7 +28,7 @@ class Keyboard():
 
     DIGITS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['0']]
     BACK = ["↩️ 返回"]
-    CANCEL = [["😂 算了"]]
+    CANCEL = ["😂 算了"]
 
     def back():
         pass
@@ -47,6 +48,9 @@ class Keyboard():
         self.keyboard_to_send = ''
 
         if buttons:
+            bin_cases = [BACK, CANCEL, bool(funcs)]
+            case = eval('0b' + reduce(lambda x, y: str(x) +
+                                      str(y), [n.real for n in bin_cases]))
             if funcs:
                 self.build(buttons, funcs)
             else:
