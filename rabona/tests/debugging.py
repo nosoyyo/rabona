@@ -2,7 +2,7 @@ import jfw
 import models
 import pickle
 from telegram import bot
-from keyboards import Keyboard as k
+from views import Keyboard as k
 
 
 bot = bot.Bot('587304899:AAFkY8Qv4YQnI4gGwns670STnszZu3CAquI')

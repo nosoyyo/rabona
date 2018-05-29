@@ -4,6 +4,8 @@ archived/
 config.py
 .vscode/
 utils/futbin.py
+TeleUser
+bot_pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

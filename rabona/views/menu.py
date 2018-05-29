@@ -1,6 +1,6 @@
 from models import RabonaUser
-from welcome import Welcome
-from keyboards import Keyboard
+from .welcome import Welcome
+from .keyboards import Keyboard
 
 
 class Menu():
@@ -37,15 +37,13 @@ class MainMenu(Menu):
 
 class Settings():
     def __init__(self):
-        back = ["↩️ 返回"]
-        settings = [["🛡 主队"], ["🇨🇳 语言/Language🇬🇧"], back]
-        self.inline = Keyboard(settings).inline
-        self.reply = Keyboard(settings).reply
+        settings = [["🛡 主队"], ["🇨🇳 语言/Language🇬🇧"]]
+        self.inline = Keyboard(settings, BACK=True).inline
+        self.reply = Keyboard(settings, BACK=True).reply
 
 
 class Quickstart():
     def __init__(self):
-        back = ["↩️ 返回"]
-        quickstart = [["📷 传图", "📝 对战"], back]
-        self.inline = Keyboard(settings).inline
-        self.reply = Keyboard(settings).reply
+        quickstart = [["📷 传图", "📝 对战"]]
+        self.inline = Keyboard(quickstart, BACK=True).inline
+        self.reply = Keyboard(quickstart, BACK=True).reply
