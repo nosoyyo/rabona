@@ -6,6 +6,8 @@ config.py
 utils/futbin.py
 TeleUser
 bot_pickle
+var
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

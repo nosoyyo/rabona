@@ -1,4 +1,4 @@
-import arrow
+import uuid
 import logging
 
 from .base import RabonaModel
@@ -55,9 +55,7 @@ class RabonaUser(RabonaModel):
             logging.info('aloha! user {} seen again.'.format(self.tele_id))
 
     def savePhoto(self, bot, photo_file):
-        filename = self.dir + \
-            arrow.now().__str__().split('.')[0].replace(
-                '/', '-').replace(':', '') + '.jpeg'
+        filename = 'var/tmp/'+uuid.uuid4().__str__()+'.jpeg'
         photo_file.download(filename)
         logging.info('user {} uploaded a photo {}.'.format(
             self.tele_id, filename))

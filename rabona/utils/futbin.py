@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from importlib import import_module
 
 from utils.pipeline import MongoDBPipeline
+from models import (FIFAClub, FIFAPlayer, FIFAPlayerPhoto,
+                    FIFAClubLogo, FIFALeague)
 
 # init
 logging.basicConfig(
@@ -47,22 +49,6 @@ def make_an_one_time_dict():
             club_league_dict[club] = league
         os.chdir('..')
     return club_league_dict
-
-
-def store_em_up():
-    m = MongoDBPipeline()
-    os.chdir('data/leagues')
-    leagues = getdir()
-
-    for league in leagues:
-        os.chdir(league)
-        clubs = getdir()
-        for club in clubs:
-            os.chdir(club)
-            club = import_module(club)
-            info = club.club_info
-            players = club.players
-        os.chdir('..')
 
 
 def getUA():
@@ -106,13 +92,7 @@ def saveFile(filename, content, mode='r+'):
 
 
 def main():
-    # set up cwd
-    working_dir = '/data/futbin'
-    if not os.path.exists(working_dir):
-        os.makedirs(working_dir)
-    os.chdir(working_dir)
-    # logging.info("working dir ready. we're now in {}".format(os.getcwd()))
-    print("working dir ready. we're now in {}".format(os.getcwd()))
+
     print('gonna sleep 10 sec. RAmen.')
     time.sleep(10)
     headers['user-agent'] = getUA()
@@ -129,22 +109,17 @@ def main():
         league_info['league_url'] = site + league_raw.a['href']
         league_info['league_name'] = league_raw.a.text
         league_info['league_logo'] = league_raw.img['src']
-        # logging.info(league_info['league_name'] + ' soup ready.')
-        print(league_info['league_name'] + ' soup ready.')
-
-        # store league info
-        if league_info['league_name'] not in os.listdir():
-            os.mkdir(league_info['league_name'])
-        os.chdir(league_info['league_name'])
-        content = 'league_info = ' + league_info.__str__() + '\n'
-        saveFile(league_info['league_name']+'.py', content)
+        league_model = FIFALeague(data=league_info)
+        league_model.clubs = []
+        league_model.save()
 
         # go inside the league
         time.sleep(10)
         headers['user-agent'] = getUA()
         headers['referer'] = getReferer()
         league_resp = requests.get(
-            league_info['league_url'], headers=headers, cookies=cookies, proxies=proxies)
+            league_info['league_url'], headers=headers, cookies=cookies,
+            proxies=proxies)
         league_soup = BeautifulSoup(league_resp.text, 'lxml')
         clubs = league_soup.select(
             'ul[class="dropdown-menu dropdown-menu2 general_dd"]')[4]('li')
@@ -155,75 +130,66 @@ def main():
             club_info['club_url'] = site + club.a['href']
             club_info['club_logo'] = club.img['src']
             club_info['club_name'] = club.text.strip()
+            club_model = FIFAClub(data=club_info)
+            club_model.players = []
+            club_model.save()
 
-            # store club info
-            if club_info['club_name'] not in os.listdir():
-                os.mkdir(club_info['club_name'])
-            os.chdir(club_info['club_name'])
-            content = 'club_info = ' + club_info.__str__() + '\nplayers = {}\n'
-            saveFile(club_info['club_name']+'.py', content)
-
-            # record all_clubs
-            os.chdir('/data/futbin')
-            content = club_info['club_name'] + '\n'
-            saveFile('all_clubs', content)
-            # logging.info('recorded {} into all_clubs.'.format(content))
-            os.chdir(league_info['league_name']+'/'+club_info['club_name'])
+            club_logo_resp = requests.get(
+                club_info['club_logo'], headers=headers,
+                cookies=cookies, proxies=proxies)
+            logo_doc = {'club_name': club_model.club_name,
+                        'club_oid': club_model.ObjectId,
+                        'logo_bytes': club_logo_resp.content}
+            FIFAClubLogo(data=logo_doc)
 
             # drill in
             time.sleep(10)
             headers['user-agent'] = getUA()
             headers['referer'] = getReferer()
-            club_resp = requests.get(
-                club_info['club_url'], headers=headers, cookies=cookies, proxies=proxies)
-            club_soup = BeautifulSoup(club_resp.text, 'lxml')
-            # logging.info(club_info['club_name'] + ' soup ready.')
-            players = club_soup.select('li[class="hvr-shrink"]')
+            for page in range(1, 5):
+                club_resp = requests.get(
+                    club_info['club_url'] + '?page=' + page, headers=headers,
+                    cookies=cookies, proxies=proxies)
+                club_soup = BeautifulSoup(club_resp.text, 'lxml')
+                # logging.info(club_info['club_name'] + ' soup ready.')
+                players = club_soup.select('li[class="hvr-shrink"]')
 
-            # break down
-            for player in players:
-                player_info = {}
-                player_info['player_url'] = site + player.a['href']
-                player_info['player_name'] = player.a['href'].split('/')[-1]
-                player_bio = player.select('div')[0].select('div')
-                player_info['player_rating'] = player_bio[0].text.strip()
-                player_info['player_shortname'] = player_bio[1].text.strip()
-                player_info['player_position'] = player_bio[2].text.strip()
-                player_info['player_nation'] = player_bio[3].img['src']
-                player_info['player_photo'] = player_bio[5].img['src']
+                # break down
+                for player in players:
+                    player_info = {}
+                    player_info['player_url'] = site + player.a['href']
+                    player_info['player_name'] = player.a['href'].split(
+                        '/')[-1]
+                    player_bio = player.select('div')[0].select('div')
+                    player_info['player_rating'] = player_bio[0].text.strip()
+                    player_info['player_shortname'] = player_bio[1].text.strip()
+                    player_info['player_position'] = player_bio[2].text.strip()
+                    player_info['player_nation'] = player_bio[3].img['src']
+                    player_info['player_photo'] = player_bio[5].img['src']
 
-                # store self and register in parent club
-                content = "players['{}'] = ".format(
-                    player_info['player_shortname']) + player_info.__str__() + '\n'
-                saveFile(club_info['club_name']+'.py', content)
+                    player_model = FIFAPlayer(data=player_info)
+                    player_photo_resp = requests.get(
+                        player_info['player_photo'], headers=headers,
+                        cookies=cookies, proxies=proxies)
+                    photo_doc = {'player_name': player_model.player_name,
+                                 'player_oid': player_model.ObjectId,
+                                 'photo_bytes': player_photo_resp.content}
+                    FIFAPlayerPhoto(data=photo_doc)
 
-            '''
-            # don't forget go back up
-            if os.getcwd().split('/')[-1] is club_info['club_name']:
-                # this indicates nothing wrong.
-                os.chdir('..')
-            else:
-                correct = '{}/{}/{}'.format(
-                    working_dir, league_info['league_name'], club_info['club_name'])
-                raise WorkingDirError(correct)
-            '''
+                    # append, temporary approach
+                    club_model.players.append(player_model.__dict__)
+                    club_model.save()
+
+                if len(players) < 30:
+                    break
+            # append, temporary approach
+            league_model.clubs.append(club_model.__dict__)
+            league_model.save()
             # temp ops
             print(club_info['club_name'] + ' done.')
-            os.chdir('..')
 
-        '''
-        # don't forget we're still in league dir!
-        if os.getcwd().split('/')[-1] is league_info['league_name']:
-            # this indicates nothing wrong.
-            os.chdir('..')
-        else:
-            correct = '{}/{}'.format(
-                    working_dir, league_info['league_name'])
-            raise WorkingDirError(correct)
-        '''
         # temp ops
         print(league_info['league_name'] + ' done.')
-        os.chdir('..')
 
 
 if __name__ == '__main__':

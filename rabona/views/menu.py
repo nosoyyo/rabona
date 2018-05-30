@@ -123,6 +123,8 @@ class Quickstart(Menu):
         bot.editMessageText(text, ru.tele_id, mid,
                             reply_markup=Opponent(mid, match).inline)
 
+        # TODO save local_file_name in Qiniu
+
     def challangeHandler(self, bot, update):
         pass
 

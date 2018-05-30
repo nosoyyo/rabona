@@ -6,11 +6,12 @@ from telegram.ext import (Updater, CommandHandler,
                           MessageHandler, Filters, CallbackQueryHandler)
 
 import views
+from models import RabonaUser
 from utils.config import rabona_bot_TOKEN as TOKEN
 
 # init logging
 logging.basicConfig(
-    filename='log/bot.log',
+    filename='var/log/bot.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,6 +28,9 @@ def error(bot, update, error):
 
 def handlerDispatcher(bot, update):
     global active_menu
+    ru = RabonaUser(update.effective_user)
+    mm = views.MainMenu(ru)
+    active_menu = mm
     views.Keyboard.handler(active_menu, bot, update)
 
 
@@ -39,7 +43,7 @@ def main():
     updater.dispatcher.add_handler(MessageHandler(
         (Filters.photo | Filters.text), views.Quickstart.uploadHandler))
     updater.dispatcher.add_handler(CommandHandler('help', views.MainMenu.help))
-    updater.dispatcher.add_handler(CallbackQueryHandler(handlerDispatcher()))
+    updater.dispatcher.add_handler(CallbackQueryHandler(handlerDispatcher))
     updater.dispatcher.add_error_handler(error)
 
     # Start the Bot

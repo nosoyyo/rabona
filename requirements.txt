@@ -1,6 +1,7 @@
-arrow
-# numpy
 # cv2
+lxml
+# arrow
+# numpy
 # apistar
 pymongo
 # fuzzywuzzy
