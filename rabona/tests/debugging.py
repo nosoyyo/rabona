@@ -14,3 +14,6 @@ u = bot.get_updates()
 with open('tests/TeleUser', 'rb') as f:
     tele_user = pickle.load(f)
 ru = models.RabonaUser(tele_user)
+
+with open('tests/bot_pickle', 'rb') as f:
+    bot = pickle.load(f)

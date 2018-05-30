@@ -1,8 +1,10 @@
 import os
+import time
 import logging
 from bson.objectid import ObjectId
 
 from .base import RabonaModel
+from errors import User310Error
 
 
 # init
@@ -28,6 +30,7 @@ class RabonaMatch(RabonaModel):
     def __init__(self, ru, oid: ObjectId=None, ri: object=None):
         self.user = ru
         self.user_oid = ru.ObjectId
+        self.created = time.time()
         if not oid and not ri:
             self.save()
         elif isinstance(oid, ObjectId):
@@ -38,16 +41,35 @@ class RabonaMatch(RabonaModel):
             try:
                 self.home = ri.A_parsed.home
                 self.away = ri.A_parsed.away
+                self.home_score = ri.A_parsed.home_score
+                self.away_score = ri.A_parsed.away_score
                 self.match_result = ri.A_parsed.match_result
                 self.match_score = ri.A_parsed.match_score
                 self.motm = ri.E_parsed
                 self.user_is_home = ri.E_parsed.user_is_home
+                self.user_310 = self.user310()
                 self.state = ri.E_parsed.state
                 self.motm_rating = ''
                 self.facts = ''
                 self.save()
             except KeyError as e:
                 print(e)
+
+    def user310(self):
+        if self.home_score > self.away_score:
+            if self.user_is_home:
+                return 3
+            else:
+                return 0
+        elif self.home_score < self.away_score:
+            if self.user_is_home:
+                return 0
+            else:
+                return 3
+        elif self.home_score == self.away_score:
+            return 1
+        else:
+            raise User310Error(self.home_score,self.away_score)
 
     @classmethod
     def getLastMatch(self, user):
