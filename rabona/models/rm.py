@@ -69,7 +69,7 @@ class RabonaMatch(RabonaModel):
         elif self.home_score == self.away_score:
             return 1
         else:
-            raise User310Error(self.home_score,self.away_score)
+            raise User310Error(self.home_score, self.away_score)
 
     @classmethod
     def getLastMatch(self, user):
