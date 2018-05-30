@@ -12,8 +12,9 @@ class InitFailure(Exception):
             print('cannot get anchor! ')
 
 
-class UnknownRawTextError(Exception):
-    pass
+class UnrecognizableTextError(Exception):
+    def __init__(self, raw):
+        print('unrecognizable raw text: {}'.format(raw))
 
 
 class HandlerInitError(Exception):

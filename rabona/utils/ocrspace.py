@@ -10,7 +10,10 @@ logging.basicConfig(
     format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 
 
-def ocr_space_file(filename, overlay=False, api_key=ocr_space_apikey, language='eng'):
+def ocr_space_file(filename: str,
+                   overlay: bool=False,
+                   api_key: str=ocr_space_apikey,
+                   language: str='eng') -> dict:
     """ OCR.space API request with local file.
         Python3.5 - not tested on 2.7
     :param filename: Your file path & name.
@@ -38,9 +41,7 @@ def ocr_space_file(filename, overlay=False, api_key=ocr_space_apikey, language='
                           )
 
     j = r.content.decode()
-    print(type(j))
     j = json.loads(j)
-    print(type(j))
     logging.info(
         'got the ocr.space response {}\ngoing to RabonaParser. j type is {}'.format(j, type(j)))
     return j

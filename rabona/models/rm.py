@@ -18,30 +18,36 @@ class RabonaMatch(RabonaModel):
 
     :method load(oid): load a RabonaMatch obj from ObjectId.
     :method save(): save a RabonaMatch obj into MongoDB.
-    :param data: `obj` ri.A_parsed, a RabonaParserA object
+    :param data: `obj` ri, a RabonaImage object expected with
+                       RabonaParserA & RabonaParserE objects.
 
-    :param user: `obj` a RabonaUser object.
+    :param ru: `obj` a RabonaUser object.
     '''
     col = 'matches'
 
-    def __init__(self, user, oid: ObjectId=None, data: object=None):
-        self.user = user
-        self.user_oid = user.ObjectId
-        if not oid and not data:
+    def __init__(self, ru, oid: ObjectId=None, ri: object=None):
+        self.user = ru
+        self.user_oid = ru.ObjectId
+        if not oid and not ri:
             self.save()
         elif isinstance(oid, ObjectId):
             self.__dict__ = self.load(oid)
             logging.info('RabonaMatch object #{} set up.'.format(self.id))
 
-        if data:
-            self.home = data.home
-            self.away = data.away
-            self.match_result = data.match_result
-            self.match_score = data.match_score
-            self.motm = ''
-            self.motm_rating = ''
-            self.facts = ''
-            self.save()
+        if ri:
+            try:
+                self.home = ri.A_parsed.home
+                self.away = ri.A_parsed.away
+                self.match_result = ri.A_parsed.match_result
+                self.match_score = ri.A_parsed.match_score
+                self.motm = ri.E_parsed
+                self.user_is_home = ri.E_parsed.user_is_home
+                self.state = ri.E_parsed.state
+                self.motm_rating = ''
+                self.facts = ''
+                self.save()
+            except KeyError as e:
+                print(e)
 
     @classmethod
     def getLastMatch(self, user):

@@ -1,8 +1,8 @@
 import logging
+from telegram.message import Message
 from telegram import (ReplyKeyboardMarkup, KeyboardButton,
                       InlineKeyboardButton, InlineKeyboardMarkup)
 
-from models import RabonaUser
 from errors import HandlerInitError
 
 
@@ -26,46 +26,28 @@ class Keyboard():
     '''
 
     DIGITS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['0']]
-    BACK = ["↩️ 返回"]
-    CANCEL = [["😂 算了"]]
 
-    def back():
-        pass
-
-    def cancel():
-        pass
-
-    def __init__(self,
-                 buttons: list=None,
-                 funcs: list=None,
-                 ruser: RabonaUser=None,
-                 BACK: bool=False,
-                 CANCEL: bool=False):
+    def __init__(self, buttons: list=None):
 
         self.previous_keyboard = ''
         self.current_keyboard = ''
         self.keyboard_to_send = ''
 
         if buttons:
-            if funcs:
-                self.build(buttons, funcs)
-            else:
-                self.build(buttons)
+            self.build(buttons)
+        elif self.buttons:
+            self.build(self.buttons)
 
     def build(self, buttons: list, funcs: list=None):
+        flatten = [y for x in buttons for y in x]
         inline = []
         reply = []
         for item in buttons:
-            if isinstance(item, list):
-                inline_item = list(
-                    map(lambda text: InlineKeyboardButton(
-                        text, callback_data=text), item))
-                reply_item = list(map(KeyboardButton, item))
+            inline_item = list(
+                map(lambda text: InlineKeyboardButton(
+                    text, callback_data=text), item))
+            reply_item = list(map(KeyboardButton, item))
 
-            else:
-                inline_item = InlineKeyboardButton(
-                    item, callback_data=item)
-                reply_item = KeyboardButton(item)
             inline.append(inline_item)
             reply.append((reply_item))
         self.inline = InlineKeyboardMarkup(inline)
@@ -73,20 +55,24 @@ class Keyboard():
 
         # mapping
         if funcs:
-            keys = [y for x in buttons for y in x]
-            if len(keys) != len(funcs):
-                raise HandlerInitError(len(buttons), len(funcs))
+            if len(flatten) != len(funcs):
+                raise HandlerInitError(len(flatten), len(funcs))
             else:
-                self.mapping = dict([(keys[i], funcs[i])
-                                     for i in range(len(keys))])
+                self.mapping = dict(zip(flatten, funcs))
 
     @classmethod
-    def handler(cls, k, bot, update):
+    def add_handler(cls, handler: callable):
+        pass
+
+    @classmethod
+    def handler(cls, obj, bot, update) -> Message or bool:
         if update.callback_query:
-            # some inline logic
+            global mid
             query = update.callback_query
+            cid = update.effective_chat.id
             logging.debug('caught {}, returning {}'.format(
-                query.data, k.mapping[query.data]))
-            return k.mapping[query.data]
+                query.data, obj.mapping[query.data]))
+            message, rmkp = obj.mapping[query.data](bot, update)
+            bot.editMessageText(message, cid, mid, reply_markup=rmkp)
         else:
-            return k.mapping[update.message.text]
+            return obj.mapping[update.message.text]

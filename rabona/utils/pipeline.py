@@ -13,7 +13,7 @@ import pymongo
 from bson.objectid import ObjectId
 from pymongo.collection import Collection
 
-from .exceptions import InvalidCollectionError
+from .exception import InvalidCollectionError
 
 
 settings = {}
