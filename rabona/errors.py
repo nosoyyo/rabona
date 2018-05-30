@@ -20,3 +20,16 @@ class UnrecognizableTextError(Exception):
 class HandlerInitError(Exception):
     def __init__(self, nb: int, nf: int):
         print('{} buttons need {} handlers, got {}!'.format(nb, nb, nf))
+
+
+class User310Error(Exception):
+    def __init__(self, home_score: int, away_score: int):
+        print('{}:{} is not a valid match score!'.format(home_score,
+                                                         away_score))
+
+
+class AppointOpponentError(Exception):
+    def __init__(match):
+        print('One or two of "user_310": {}, "user_is_home": {} might\
+              be broken!'.format(
+            match.user_310, match.user_is_home))
