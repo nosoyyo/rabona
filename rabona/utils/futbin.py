@@ -8,13 +8,15 @@ import random
 import logging
 import requests
 from bs4 import BeautifulSoup
+from importlib import import_module
 
-from exceptions import WorkingDirError
+from utils.pipeline import MongoDBPipeline
 
 # init
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
 logging.info('session started.')
 
 site = 'https://www.futbin.com/'
@@ -28,6 +30,41 @@ UserAgentList = [l[0] for l in UserAgentList]
 random.shuffle(UserAgentList)
 
 
+def getdir(): return list(
+    filter(os.path.isdir, [item for item in os.listdir()]))
+
+
+def make_an_one_time_dict():
+    club_league_dict = {}
+
+    os.chdir('data/leagues')
+    leagues = getdir()
+
+    for league in leagues:
+        os.chdir(league)
+        clubs = getdir()
+        for club in clubs:
+            club_league_dict[club] = league
+        os.chdir('..')
+    return club_league_dict
+
+
+def store_em_up():
+    m = MongoDBPipeline()
+    os.chdir('data/leagues')
+    leagues = getdir()
+
+    for league in leagues:
+        os.chdir(league)
+        clubs = getdir()
+        for club in clubs:
+            os.chdir(club)
+            club = import_module(club)
+            info = club.club_info
+            players = club.players
+        os.chdir('..')
+
+
 def getUA():
     return random.choice(UserAgentList)
 
@@ -39,11 +76,12 @@ def getReferer():
 
 proxies = {
     'http': '190.123.83.251:8080',
-    'https': '190.104.195.210:53281'
+    #    'http': '190.104.195.210:8080'
 }
 
 headers = {}
-headers['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+headers['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,\
+image/webp,image/apng,*/*;q=0.8'
 headers['accept-encoding'] = 'gzip, deflate, br'
 headers['accept-language'] = 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7'
 headers['cache-control'] = 'max-age=0'

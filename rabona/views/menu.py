@@ -1,5 +1,6 @@
 from telegram.message import Message
 from telegram import InlineKeyboardMarkup
+from telegram.ext.dispatcher import run_async
 
 from ri import RabonaImage
 from models import RabonaUser, RabonaMatch
@@ -83,7 +84,10 @@ class Quickstart(Menu):
     buttons = [["📷 传图", "📝 对战"]]
 
     @classmethod
+    @run_async
     def uploadHandler(cls, bot, update) -> (Message, InlineKeyboardMarkup):
+        bot.send_message(update.effective_user.id,
+                         'Please hold on, this may take up a while...')
         bot.sendChatAction(update.effective_chat.id, action='typing')
         ru = RabonaUser(update.message.from_user)
         photo_file = bot.get_file(update.message.photo[-1].file_id)
@@ -94,7 +98,7 @@ class Quickstart(Menu):
 
         # deal with local photo file
         ri = RabonaImage(local_file_name)
-        match = RabonaMatch(user=ru, data=ri.A_parsed)
+        match = RabonaMatch(ru=ru, ri=ri)
         return ri.A_parsed.match_result, Opponent(match).inline
 
     def challangeHandler(self, bot, update):

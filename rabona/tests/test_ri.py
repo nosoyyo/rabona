@@ -1,10 +1,11 @@
 import time
 import unittest
 import numpy as np
+from importlib import import_module
 
 from screen import Screen
 from ri import RabonaImage
-from parser import RabonaParserA
+from parsers import RabonaParserA, RabonaParserE
 
 
 class TestRI(unittest.TestCase):
@@ -40,7 +41,7 @@ class TestRI(unittest.TestCase):
         self.assertIsInstance(ri.screen.A, np.ndarray)
         self.assertIsInstance(ri.screen.E, np.ndarray)
 
-    def test_parser(self):
+    def test_parser_A(self):
         t0 = time.time()
         print('\nTestRI | test_parser starts at {}\n'.format(t0))
         f = 'src/test.jpg'
@@ -65,3 +66,24 @@ class TestRI(unittest.TestCase):
         self.assertEqual(ri.A_parsed.match_score, '7 : 0')
         self.assertEqual(ri.A_parsed.match_result,
                          'Real Madrid 7 : 0 Liverpool')
+
+    def test_parser_E(self):
+        t0 = time.time()
+        print('\nTestRI | test_parser starts at {}\n'.format(t0))
+        f = 'src/test.jpg'
+        ri = RabonaImage(f)
+        t1 = time.time()
+        print('time usage: {:.3f}s'.format(t1-t0))
+
+        self.assertIn('E_parsed', ri.__dict__)
+        self.assertIsInstance(ri.E_parsed, RabonaParserE)
+        self.assertIn('_raw', ri.E_parsed.__dict__)
+        self.assertIn('motm', ri.E_parsed.__dict__)
+        self.assertTrue(ri.E_parsed.user_is_home)
+        self.assertEqual(ri.E_parsed.state, 0)
+
+        club = import_module(
+            'data.leagues.LaLiga Santander.Real Madrid.Real Madrid')
+        players = club.players
+        bale_dict = players['Bale']
+        self.assertDictEqual(ri.E_parsed.motm, bale_dict)

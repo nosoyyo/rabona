@@ -46,7 +46,7 @@ class ImageHub():
         return _input
 
     @classmethod
-    def save(self, _input, filename=None, format='jpeg'):
+    def save(self, _input, filename: str=None, format='jpeg') -> str:
         _input = self.convert(_input, to='PIL.Image')
 
         def makeFilename(format='jpeg'):
@@ -60,3 +60,4 @@ class ImageHub():
             filename = makeFilename(format=format)
 
         _input.save(filename)
+        return filename
