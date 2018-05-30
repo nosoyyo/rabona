@@ -5,13 +5,14 @@ import pytesseract as pyt
 from screen import Screen
 from hub import ImageHub
 from utils.ocrspace import ocr_space_file
-from parser import RabonaParserA
+from parsers import RabonaParserA
 
 # init
 logging.basicConfig(
     filename='log/ri.log',
     level=logging.INFO,
-    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
 
 
 class RabonaImage():
@@ -35,7 +36,14 @@ class RabonaImage():
         A_rough = pyt.image_to_string(A, config='--psm 6', lang='eng')
         self.A_parsed = RabonaParserA(A_rough)
 
-    def send4OCR(self, _input):
-        file_full_name = self.filename + '_ocr' + self.suffix
-        ImageHub.save(_input, file_full_name)
-        ocr_space_file(file_full_name)
+
+'''
+        E = ImageHub.convert(self.screen.E, 'np.ndarray')
+        E_rough = pyt.image_to_string(E, config='--psm 6', lang='eng')
+        self.E_parsed = RabonaParserE(E_rough)
+'''
+
+def send4OCR(self, _input):
+    file_full_name = self.filename + '_ocr' + self.suffix
+    ImageHub.save(_input, file_full_name)
+    ocr_space_file(file_full_name)

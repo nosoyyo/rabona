@@ -109,7 +109,9 @@ class Opponent(Menu):
         self.match = rm
 
     def AIHandler(self, bot, update) -> (Message, InlineKeyboardMarkup):
-        message = '对手 {} 是 AI.'.format(self.match.)
+        # message = '对手 {} 是 AI.'.format(self.match.home) or away??
+        # TODO
+        pass
 
     def contactHandler(self, bot, update):
         pass
