@@ -1,4 +1,7 @@
-import copy
+__name__ = 'Core ODM <=> MongoDB, first use on Rabona.'
+__author__ = 'nosoyyo'
+__version__ = {'0.1': '2018.05.03'}
+
 import logging
 from bson.objectid import ObjectId
 
@@ -7,7 +10,7 @@ from utils.pipeline import MongoDBPipeline
 
 # init
 logging.basicConfig(
-    filename='log/base.log',
+    filename='var/log/base.log',
     level=logging.INFO,
     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s \
     %(message)s')
@@ -18,7 +21,7 @@ class RabonaModel():
     col = ''
     field_types = [bool, str, int, list, tuple, set, dict, bytes, ObjectId]
 
-    def __init__(self, doc=None, **kwargs):
+    def __init__(self, doc: dict=None, **kwargs):
         if not doc:
             _dict = kwargs
         elif doc:
@@ -35,7 +38,9 @@ class RabonaModel():
         scene 0: init saving for new obj
         scene 1: update for existed obj
 
-        :param oid: 'obj' bson.objectid.ObjecdId object.
+        :param oid: `obj` bson.objectid.ObjecdId object
+
+        :param col: `str` to set MongoDB.db.collection, fallback on 'testcol'
         '''
 
         if not col:
@@ -44,8 +49,7 @@ class RabonaModel():
             else:
                 col = self.m.col
 
-        doc_original = [list(item) for item in self.__dict__.items()]
-        doc = dict(copy.deepcopy(doc_original))
+        doc = dict([list(item) for item in self.__dict__.items()])
         for key in list(doc):
             if type(doc[key]) not in self.field_types:
                 doc.pop(key)
@@ -57,21 +61,25 @@ class RabonaModel():
                 oid = oid
             result = self.m.update(oid, doc, col)
 
-            logging.info('doc {} updated in {}'.format(doc, col))
+            logging.debug('doc {} updated in {}'.format(doc, col))
             return result
         else:
-            print(doc)
+            logging.debug('input doc is: {}'.format(doc))
             if 'ObjectId' not in doc.keys() and doc != self.m.ls(doc, col):
                 result = self.m.insert(doc, col) or False
-                print(result)
+                logging.debug('get result: {}'.format(result))
                 if isinstance(result, ObjectId):
                     self.ObjectId = result
-                    logging.info('doc {} inserted in {}'.format(doc, col))
+                    logging.debug('doc {} inserted in {}'.format(doc, col))
                 return bool(result)
             else:
                 return False
 
-    def load(self, some_id=None, col=None):
+    def load(self, some_id=None, col: str=None) -> dict:
+        '''
+
+        :param some_id: `None` not quite sure what'll be input yet
+        '''
 
         if not col:
             if self.col:
@@ -93,10 +101,9 @@ class RabonaModel():
                 query_key = 'tele_id'
                 query_value = some_id
 
-            logging.info('querying key: {}, value: {}'.format(
+            logging.debug('querying key: "{}" & value: "{}"'.format(
                 query_key, query_value))
             retrieval = self.m.ls({query_key: query_value}, col)
-            print(1)
 
             if isinstance(retrieval, list):
                 __dict__ = retrieval[0]

@@ -9,7 +9,7 @@ from errors import User310Error
 
 # init
 logging.basicConfig(
-    filename='log/match.log',
+    filename='var/log/match.log',
     level=logging.INFO,
     format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
     %(message)s')

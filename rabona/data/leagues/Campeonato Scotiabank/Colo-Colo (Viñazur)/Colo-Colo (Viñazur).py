@@ -1,4 +1,0 @@
-club_info = {'club_url': 'https://www.futbin.com///18/leagues/Campeonato%20Scotiabank?page=1&club=110980', 'club_logo': 'https://cdn.futbin.com/content/fifa18/img/clubs/110980.png', 'club_name': 'Colo-Colo (Viñazur)'}
-players = {}
-players['Carmona'] = {'player_url': 'https://www.futbin.com//18/player/17611/Carlos Carmona', 'player_name': 'Carlos Carmona', 'player_rating': '74', 'player_shortname': 'Carmona', 'player_position': 'CDM', 'player_nation': 'https://cdn.futbin.com/content/fifa18/img/nation/55.png', 'player_photo': 'https://cdn.futbin.com/content/fifa18/img/players/188413.png?v=2'}
-players['Insaurralde'] = {'player_url': 'https://www.futbin.com//18/player/17612/Juan Insaurralde', 'player_name': 'Juan Insaurralde', 'player_rating': '73', 'player_shortname': 'Insaurralde', 'player_position': 'CB', 'player_nation': 'https://cdn.futbin.com/content/fifa18/img/nation/52.png', 'player_photo': 'https://cdn.futbin.com/content/fifa18/img/players/153060.png?v=2'}

@@ -6,7 +6,7 @@ from .base import RabonaModel
 
 # init
 logging.basicConfig(
-    filename='log/user.log',
+    filename='var/log/user.log',
     level=logging.INFO,
     format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
     %(message)s')

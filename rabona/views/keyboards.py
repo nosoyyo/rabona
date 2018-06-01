@@ -7,7 +7,7 @@ from errors import HandlerInitError
 
 
 logging.basicConfig(
-    filename='log/kb.log',
+    filename='var/log/kb.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.DEBUG)
 

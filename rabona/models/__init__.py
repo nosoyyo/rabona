@@ -1,3 +1,4 @@
+from . import data_builder
 from .ru import RabonaUser
 from .rm import RabonaMatch
 from .base import RabonaModel
@@ -10,6 +11,6 @@ from .FIFA_club_logo import FIFAClubLogo
 from .FIFA_player_photo import FIFAPlayerPhoto
 
 
-__all__ = (RabonaModel, RabonaMatch, RabonaPerson,
+__all__ = (data_builder, RabonaModel, RabonaMatch, RabonaPerson,
            RabonaUser, RabonaPlayer, FIFAClub, FIFAPlayer,
            FIFAPlayerPhoto, FIFAClubLogo, FIFALeague)

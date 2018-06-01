@@ -1,3 +1,0 @@
-club_info = {'club_url': 'https://www.futbin.com///18/leagues/Campeonato%20Scotiabank?page=1&club=110977', 'club_logo': 'https://cdn.futbin.com/content/fifa18/img/clubs/110977.png', 'club_name': 'Unión Española'}
-players = {}
-players['Calzada'] = {'player_url': 'https://www.futbin.com//18/player/17610/Maximiliano Calzada', 'player_name': 'Maximiliano Calzada', 'player_rating': '65', 'player_shortname': 'Calzada', 'player_position': 'CM', 'player_nation': 'https://cdn.futbin.com/content/fifa18/img/nation/60.png', 'player_photo': 'https://cdn.futbin.com/content/fifa18/img/players/227798.png?v=2'}

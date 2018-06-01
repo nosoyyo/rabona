@@ -33,3 +33,9 @@ class AppointOpponentError(Exception):
         print('One or two of "user_310": {}, "user_is_home": {} might\
               be broken!'.format(
             match.user_310, match.user_is_home))
+
+
+class InvalidURLError(Exception):
+    def __init__(self, url):
+        print('Url {} is not a valid futbin url. \
+        Check it carefully!'.format(url))
