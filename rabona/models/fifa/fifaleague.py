@@ -1,10 +1,20 @@
-from bson.objectid import ObjectId
+import logging
 from fuzzywuzzy import process
+from bson.objectid import ObjectId
 
-from .rabona import RabonaModel
+from .base import FIFAModel
 
 
-class FIFALeague(RabonaModel):
+# init
+logging.basicConfig(
+    filename='var/log/databuilder.log',
+    level=logging.DEBUG,
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
+logging.info('session started.')
+
+
+class FIFALeague(FIFAModel):
     '''
     '''
     all_leagues = ['3. Liga', 'Alka Superliga', 'Allsvenskan',
@@ -27,7 +37,7 @@ class FIFALeague(RabonaModel):
     col = 'FIFA_leagues'
     custom_ls_behaviour_col = [col]
 
-    def __init__(self, oid: ObjectId=None, data: dict=None):
+    def __init__(self, oid: ObjectId=None, data: dict=None, name: str=None):
         if data:
             probe = self.m.ls({'league_name': data['league_name']}, self.col)
             if len(probe) == 0:
@@ -38,8 +48,18 @@ class FIFALeague(RabonaModel):
                 self.save()
         elif isinstance(oid, ObjectId):
             self.__dict__ = self.load(oid)
+        elif name:
+            league_name = process.extractOne(name, self.all_leagues)[0]
+            try:
+                self.__dict__ = self.m.ls(
+                    {'league_name': league_name}, self.col)[0]
+            except Exception as e:
+                logging.error(
+                    'name: {}, league_name: {}'.format(name, league_name))
+                print('create league by name raises {}'.format(e))
 
     def custom_ls(self, arg: str=None, col=None):
         if isinstance(arg, str):
+            print('FIFALeague custom_ls called!')
             query = process.extractOne(arg, self.all_leagues)[0]
             return self.m.ls({'league_name': query}, self.col)

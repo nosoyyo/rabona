@@ -1,9 +1,9 @@
 from bson.objectid import ObjectId
 
-from .rabona import RabonaModel
+from .base import FIFAModel
 
 
-class FIFAClubLogo(RabonaModel):
+class FIFAClubLogo(FIFAModel):
     '''
     '''
     col = 'FIFA_club_logos'

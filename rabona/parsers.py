@@ -1,11 +1,10 @@
 import logging
 from fuzzywuzzy import process
 from bson.objectid import ObjectId
-from importlib import import_module
 
-from data.leagues import club_league_dict
+from models import FIFAClub, FIFAPlayer
 from utils.pipeline import MongoDBPipeline
-from errors import UnrecognizableTextError
+from errors import UnrecognizableTextError, RabonaParserFailure
 
 # init
 logging.basicConfig(
@@ -41,10 +40,10 @@ class RabonaParserA():
             else:
                 raise UnrecognizableTextError(self.divided)
 
-        self.home = process.extractOne(self.divided[0], all_clubs)[0]
+        self.home = FIFAClub(name=self.divided[0])
         logging.debug('retrieved home name {}'.format(self.home))
 
-        self.away = process.extractOne(self.divided[1], all_clubs)[0]
+        self.away = FIFAClub(name=self.divided[1])
         logging.debug('retrieved away name {}'.format(self.away))
 
         home_score = self.divided[0].strip().split(' ')[-1]
@@ -66,18 +65,21 @@ class RabonaParserA():
         self.match_score = self.home_score + ' : ' + self.away_score
 
         self.match_result = '{} {} {}'.format(
-            self.home, self.match_score, self.away)
+            self.home.club_name, self.match_score, self.away.club_name)
         logging.info('match result: {}'.format(self.match_result))
 
 
 class RabonaParserE():
     '''
-        Return an `int` as state code.
+        Return an `int` as state code
 
-        :state `0`: OK, not any problem.
-        :state `1`: vague, need user specification manually.
-        :state `2`: bad, can't get anything meaningful out
-        :state `3`: unknown ~~pleasures~~ error.
+        :state `0`: OK, not any problem
+
+        :state `1`: vague, may need user specification manually
+
+        :state `2`: bad result, very risky
+
+        :state `3`: unknown ~~pleasures~~ error
     '''
 
     def __init__(self, _input: str, rpa: RabonaParserA):
@@ -86,43 +88,49 @@ class RabonaParserE():
         elif isinstance(_input, str):
             self._raw = _input
 
-        home_club_name = rpa.home
-        home_league = club_league_dict[home_club_name]
-        home_club_module = import_module(
-            'data.leagues.{0}.{1}.{1}'.format(home_league, home_club_name))
+        home_club_module = rpa.home
         home_players = home_club_module.players
         home_player_names = list(set(home_players))
         home_process = process.extractOne(self._raw, home_player_names)
         home_retrieval = home_process[0]
         home_weight = home_process[1]
 
-        away_club_name = rpa.away
-        away_league = club_league_dict[away_club_name]
-        away_club_module = import_module(
-            'data.leagues.{0}.{1}.{1}'.format(away_league, away_club_name))
+        away_club_module = rpa.away
         away_players = away_club_module.players
         away_player_names = list(set(away_players))
         away_process = process.extractOne(self._raw, away_player_names)
         away_retrieval = away_process[0]
         away_weight = away_process[1]
 
-        # comparing
+        # switching cases
         if home_weight >= 90 and away_weight <= 51:
-            self.motm = home_players[home_retrieval]
+            self.motm = FIFAPlayer(common_name=home_retrieval)
             self.user_is_home = True
             self.state = 0
         elif away_weight >= 90 and home_weight <= 51:
-            self.motm = away_players[away_retrieval]
+            self.motm = FIFAPlayer(common_name=away_retrieval)
             self.user_is_home = False
             self.state = 0
         else:
-            if home_weight >= 90:
-                self.motm = home_retrieval
+            if home_weight >= 80:
+                self.motm = FIFAPlayer(common_name=home_retrieval)
                 self.user_is_home = True
                 self.state = 1
-            elif away_weight >= 90:
-                self.motm = away_retrieval
+            elif away_weight >= 80:
+                self.motm = FIFAPlayer(common_name=away_retrieval)
                 self.user_is_home = False
                 self.state = 1
             else:
-                self.state = 2
+                if home_weight - away_weight >= 10:
+                    self.motm = FIFAPlayer(common_name=home_retrieval)
+                    self.user_is_home = True
+                    self.state = 2
+                elif away_weight - home_weight >= 10:
+                    self.motm = FIFAPlayer(common_name=away_retrieval)
+                    self.user_is_home = False
+                    self.state = 2
+                else:
+                    self.state = 3
+                    error_list = [self._raw, home_retrieval,
+                                  home_weight, away_retrieval, away_weight]
+                    raise RabonaParserFailure(error_list)

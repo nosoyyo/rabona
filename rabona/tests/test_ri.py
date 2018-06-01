@@ -1,10 +1,10 @@
 import time
 import unittest
 import numpy as np
-from importlib import import_module
 
 from screen import Screen
 from ri import RabonaImage
+from models import FIFAClub, FIFAPlayer
 from parsers import RabonaParserA, RabonaParserE
 
 
@@ -59,8 +59,12 @@ class TestRI(unittest.TestCase):
         self.assertIn('match_score', ri.A_parsed.__dict__)
         self.assertIn('match_result', ri.A_parsed.__dict__)
 
-        self.assertEqual(ri.A_parsed.home, 'Real Madrid')
-        self.assertEqual(ri.A_parsed.away, 'Liverpool')
+        self.assertIsInstance(ri.A_parsed.home, FIFAClub)
+        self.assertEqual(ri.A_parsed.home.club_name, 'Real Madrid')
+        self.assertEqual(ri.A_parsed.home.league, 'LaLiga Santander')
+        self.assertIsInstance(ri.A_parsed.away, FIFAClub)
+        self.assertEqual(ri.A_parsed.away.club_name, 'Liverpool')
+        self.assertEqual(ri.A_parsed.away.league, 'Premier League')
         self.assertEqual(ri.A_parsed.home_score, '7')
         self.assertEqual(ri.A_parsed.away_score, '0')
         self.assertEqual(ri.A_parsed.match_score, '7 : 0')
@@ -77,13 +81,10 @@ class TestRI(unittest.TestCase):
 
         self.assertIn('E_parsed', ri.__dict__)
         self.assertIsInstance(ri.E_parsed, RabonaParserE)
+        self.assertLessEqual(ri.E_parsed.state, 2)
         self.assertIn('_raw', ri.E_parsed.__dict__)
         self.assertIn('motm', ri.E_parsed.__dict__)
         self.assertTrue(ri.E_parsed.user_is_home)
-        self.assertEqual(ri.E_parsed.state, 0)
 
-        club = import_module(
-            'data.leagues.LaLiga Santander.Real Madrid.Real Madrid')
-        players = club.players
-        bale_dict = players['Bale']
-        self.assertDictEqual(ri.E_parsed.motm, bale_dict)
+        gb = FIFAPlayer(common_name='Gareth Bale')
+        self.assertDictEqual(ri.E_parsed.motm.__dict__, gb.__dict__)

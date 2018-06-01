@@ -1,7 +1,7 @@
 from . import databuilder
-from .rabona import (RabonaUser, RabonaMatch, RabonaModel,
+from .rabona import (RabonaModel, RabonaUser, RabonaMatch,
                      RabonaCompetition, RabonaPerson, RabonaPlayer)
-from .fifa import (FIFAClub, FIFAClubLogo, FIFALeague,
+from .fifa import (FIFAModel, FIFAClub, FIFAClubLogo, FIFALeague,
                    FIFAPlayer, FIFAPlayerPhoto)
 
 __all__ = (databuilder, RabonaModel, RabonaMatch, RabonaPerson,

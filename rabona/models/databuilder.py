@@ -12,18 +12,27 @@ from functools import reduce
 from bs4 import BeautifulSoup
 
 from errors import InvalidURLError
-from .FIFA_club import FIFAClub
-from .FIFA_league import FIFALeague
-from .FIFA_player import FIFAPlayer
 from utils.pipeline import MongoDBPipeline
+from .fifa import FIFALeague, FIFAClub, FIFAPlayer
 
+
+# init
+logging.basicConfig(
+    filename='var/log/databuilder.log',
+    level=logging.DEBUG,
+    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
+    %(message)s')
+logging.info('session started.')
 
 sleep = 10
-magic_number = '16acaf9de83cf16'
+magic_number = '0x241c061a5b58abcf16'
 
 
-def magic(str: str) -> str:
-    pass
+def magic(s: str) -> str:
+    return '0x{:x}'.format(
+        int(str(ord('ʚ'))+reduce(lambda x,
+                                 y: '{:0>3}'.format(x)+'{:0>3}'
+                                 .format(y), map(ord, s))))
 
 
 def readMagic(magic_number: str)->str:
@@ -31,27 +40,19 @@ def readMagic(magic_number: str)->str:
     Not serious magic at all.
     Just to avoid literal material.
     '''
-    tm = '{:d}'.format(int(eval('0x'+magic_number)))
+    tm = '{:d}'.format(int(eval(magic_number)))
     result = []
     for i in range(0, len(tm), 3):
         a, b = i, i+3
         result.append(int(tm[a:b]))
-    return reduce(lambda x, y: x+y, map(chr, result))
+    return reduce(lambda x, y: x+y, map(chr, result))[1:]
 
-
-# init
-logging.basicConfig(
-    filename='var/log/dataminer.log',
-    level=logging.DEBUG,
-    format='%(asctime)s%(filename)s[line:%(lineno)d] %(levelname)s \
-    %(message)s')
-logging.info('session started.')
 
 site = 'https://www.{}.com/'.format(readMagic(magic_number))
 
 
 def getReferer():
-    base = 'https://www.{}.com/18/player/'
+    base = 'https://www.{}.com/18/player/'.format(readMagic(magic_number))
     return base + str(round(random.random() * 10000))
 
 
@@ -128,7 +129,7 @@ def getClubs(league_name) -> list:
     return clubs_list
 
 
-def getPlayers(club_name: str=None, url: str=None) -> None:
+def getPlayers(club_name: str=None, url: str=None) -> list:
     '''
     Only for get club.players `list`, not for get player full attributions.
 
@@ -162,14 +163,18 @@ def getPlayers(club_name: str=None, url: str=None) -> None:
             break
 
         # break down
+        result = []
         for player in players:
             # `common_name` here
             common_name = player.a['href'].split('/')[-1]
             short_name = player.select('div[class="pcdisplay-name"]')[0].text
             club_model.players[common_name] = short_name
             club_model.save()
+            result.append(common_name)
             print('{} done.'.format(common_name))
+
         print('{} done.'.format(club_model.club_name))
+        return result
 
 
 def isValidURL(url):
@@ -191,7 +196,8 @@ def getPlayer(common_name: str=None,
             logging.error('`getPlayer` raises "{}"'.format(e))
 
     if not url:
-        query = 'https://www.{}.com/18/players?search=' + common_name
+        query = 'https://www.{}.com/18/players?search='.format(
+            readMagic(magic_number)) + common_name
         r = requests.get(query)
         soup = BeautifulSoup(r.text, 'lxml')
         player_trs = soup.select('tr[class*="player_tr"]')

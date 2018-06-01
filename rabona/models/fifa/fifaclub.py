@@ -1,10 +1,10 @@
 from bson.objectid import ObjectId
 from fuzzywuzzy import process
 
-from .rabona import RabonaModel
+from .base import FIFAModel
 
 
-class FIFAClub(RabonaModel):
+class FIFAClub(FIFAModel):
     '''
     FIFAClub.players only store a list of player common_names.
     Note that the combination between clubs and players in this section

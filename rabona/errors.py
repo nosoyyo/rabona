@@ -39,3 +39,8 @@ class InvalidURLError(Exception):
     def __init__(self, url):
         print('Url {} is not a valid futbin url. \
         Check it carefully!'.format(url))
+
+
+class RabonaParserFailure(Exception):
+    def __init__(self, errors: list):
+        print('things went weird with these elements: {}'.format(errors))

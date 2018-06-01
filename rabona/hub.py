@@ -57,7 +57,7 @@ class ImageHub():
             return uuid.uuid4().__str__() + suffix
 
         if not filename:
-            filename = makeFilename(format=format)
+            filename = 'var/tmp/' + makeFilename(format=format)
 
         _input.save(filename)
         return filename
