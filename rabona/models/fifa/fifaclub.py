@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from fuzzywuzzy import process
 
-from .base import RabonaModel
+from .rabona import RabonaModel
 
 
 class FIFAClub(RabonaModel):

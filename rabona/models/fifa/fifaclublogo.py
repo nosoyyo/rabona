@@ -1,12 +1,12 @@
 from bson.objectid import ObjectId
 
-from .base import RabonaModel
+from .rabona import RabonaModel
 
 
-class FIFAPlayerPhoto(RabonaModel):
+class FIFAClubLogo(RabonaModel):
     '''
     '''
-    col = 'FIFA_player_photos'
+    col = 'FIFA_club_logos'
 
     def __init__(self, oid: ObjectId=None, data: dict=None):
         if data:

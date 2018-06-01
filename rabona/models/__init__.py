@@ -1,16 +1,9 @@
-from . import data_builder
-from .ru import RabonaUser
-from .rm import RabonaMatch
-from .base import RabonaModel
-from .FIFA_club import FIFAClub
-from .player import RabonaPlayer
-from .person import RabonaPerson
-from .FIFA_league import FIFALeague
-from .FIFA_player import FIFAPlayer
-from .FIFA_club_logo import FIFAClubLogo
-from .FIFA_player_photo import FIFAPlayerPhoto
+from . import databuilder
+from .rabona import (RabonaUser, RabonaMatch, RabonaModel,
+                     RabonaCompetition, RabonaPerson, RabonaPlayer)
+from .fifa import (FIFAClub, FIFAClubLogo, FIFALeague,
+                   FIFAPlayer, FIFAPlayerPhoto)
 
-
-__all__ = (data_builder, RabonaModel, RabonaMatch, RabonaPerson,
-           RabonaUser, RabonaPlayer, FIFAClub, FIFAPlayer,
-           FIFAPlayerPhoto, FIFAClubLogo, FIFALeague)
+__all__ = (databuilder, RabonaModel, RabonaMatch, RabonaPerson,
+           RabonaUser, RabonaPlayer, RabonaCompetition,
+           FIFAClub, FIFAPlayer, FIFAPlayerPhoto, FIFAClubLogo, FIFALeague)

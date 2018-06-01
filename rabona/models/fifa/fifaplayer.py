@@ -1,6 +1,6 @@
 from bson.objectid import ObjectId
 
-from .base import RabonaModel
+from .rabona import RabonaModel
 
 
 class FIFAPlayer(RabonaModel):
