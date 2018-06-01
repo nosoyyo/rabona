@@ -1,5 +1,3 @@
-from telegram.message import Message
-from telegram import InlineKeyboardMarkup
 from telegram.ext.dispatcher import run_async
 
 from ri import RabonaImage
@@ -10,8 +8,21 @@ from models import RabonaUser, RabonaMatch
 
 
 class Menu(Keyboard):
+    '''
 
-    def __init__(self):
+    Note: if rewrite __init__ then must include
+
+    `self.build(<buttons>)`
+
+    &
+
+    `self.buildMap()`
+
+    '''
+
+    buttons = [['placeholder']]
+
+    def __init__(self, buttons: list=None):
         self.buildMap()
 
     def buildMap(self):
@@ -30,16 +41,20 @@ class MainMenu(Menu):
 
     def __init__(self, ru: RabonaUser):
         self.buttons = [[ru.appellation], ["🏆 赛事", "🚀快速开始", "⚙️ 设置"]]
+        self.build(self.buttons)
+        self.buildMap()
 
     @classmethod
     def start(self, bot, update):
-        global active_menu
-        active_menu = self
-        user = RabonaUser(update.effective_user)
-        welcome = Welcome(user)
+
+        ru = RabonaUser(update.message.from_user)
+
+        welcome = Welcome(ru)
         message = welcome.message
-        self.mmm = bot.send_message(
-            user.tele_id, message, reply_markup=self.inline)
+        # mmid: ru.menu_message_id
+        ru.mmid = bot.send_message(
+            ru.tele_id, message, reply_markup=self.inline)
+        ru.save()
 
     def help(bot, update):
         update.message.reply_text("Use /start to test this bot.")
@@ -48,13 +63,14 @@ class MainMenu(Menu):
         query = update.callback_query
         if query:
             if query.data == "⚙️ 设置":
-                mid = update.effective_message.message_id
+                # should use ru.mmid
+                mmid = update.effective_message.message_id
                 text = 'here you can do some settings.'
-                bot.editMessageText(mid, text, reply_markup=Settings().inline)
+                bot.editMessageText(mmid, text, reply_markup=Settings().inline)
             elif query.data == "🚀快速开始":
-                mid = update.effective_message.message_id
+                mmid = update.effective_message.message_id
                 text = 'here you can do some settings.'
-                bot.editMessageText(mid, text, reply_markup=Settings().inline)
+                bot.editMessageText(mmid, text, reply_markup=Settings().inline)
 
     def profileHandler(self, bot, update):
         pass
@@ -86,11 +102,15 @@ class Quickstart(Menu):
 
     @classmethod
     @run_async
-    def uploadHandler(cls, bot, update) -> (Message, InlineKeyboardMarkup):
-        mid = bot.send_message(update.effective_user.id,
-                               'Please hold on, this may take up a while...')
+    def uploadHandler(cls, bot, update):
+        mmid = bot.send_message(
+            update.effective_user.id,
+            'Please hold on, this may take up a while...').message_id
         bot.sendChatAction(update.effective_chat.id, action='typing')
+
         ru = RabonaUser(update.message.from_user)
+        ru.mmid = mmid
+
         photo_file = bot.get_file(update.message.photo[-1].file_id)
         local_file_name = ru.savePhoto(bot, photo_file)
 
@@ -101,7 +121,6 @@ class Quickstart(Menu):
         ri = RabonaImage(local_file_name)
         match = RabonaMatch(ru=ru, ri=ri)
         ru.recent_match = match
-        ru.save()
 
         # appoint opponent
         if match.user_310 == 3:
@@ -120,8 +139,14 @@ class Quickstart(Menu):
         else:
             raise AppointOpponentError(match)
 
-        bot.editMessageText(text, ru.tele_id, mid,
-                            reply_markup=Opponent(mid, match).inline)
+        op = Opponent(match)
+        ru.active_menu = op
+        ru.save()
+
+        # set keyboard before call a handler!
+        # editMessageText(text, cid, mid, reply_markup)
+        bot.editMessageText(text, ru.tele_id, mmid,
+                            reply_markup=op.inline)
 
         # TODO save local_file_name in Qiniu
 
@@ -132,22 +157,32 @@ class Quickstart(Menu):
 class Opponent(Menu):
     '''
     Part II of upload. Appoint opponent.
+    Note: if rewrite __init__ then must include
 
-    :param mid: `int` message_id for bot.editMessageText
+    `self.build(<buttons>)`
+
+    &
+
+    `self.buildMap()`
+
+    :param mmid: `int` message_id for bot.editMessageText
     '''
 
     buttons = [["AI", "好友..."]]
 
-    def __init__(self, mid: int, rm: RabonaMatch):
+    def __init__(self, rm: RabonaMatch):
         self.match = rm
-        self.mid = mid
+        self.build(self.buttons)
+        self.buildMap()
 
-    def AIHandler(self, bot, update) -> (Message, InlineKeyboardMarkup):
+    def AIHandler(self, bot, update):
         # message = '对手 {} 是 AI.'.format(self.match.home) or away??
         # TODO
+        ru = RabonaUser(update.message.from_user)
         self.match.opponent = 'AI'
         self.match.save()
-        bot.editMessageText('比赛已保存。', update.effective_user.id, self.mid)
+        # editMessageText(text, cid, mid, reply_markup)
+        bot.editMessageText('比赛已保存。', ru.tele_id, ru.mmid)
 
     def contactHandler(self, bot, update):
         pass

@@ -22,6 +22,7 @@ class RabonaUser(RabonaModel):
     '''
 
     col = 'users'
+    key_objs = ['active_menu']
 
     def __init__(self, tele_user=None):
         self.m = super(RabonaUser, self).m

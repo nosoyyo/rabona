@@ -2,6 +2,7 @@ __name__ = 'Core ODM <=> MongoDB, first use on Rabona.'
 __author__ = 'nosoyyo'
 __version__ = {'0.1': '2018.05.03'}
 
+import pickle
 import logging
 from bson.objectid import ObjectId
 
@@ -11,7 +12,7 @@ from utils.pipeline import MongoDBPipeline
 # init
 logging.basicConfig(
     filename='var/log/base.log',
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s \
     %(message)s')
 
@@ -50,6 +51,11 @@ class RabonaModel():
                 col = self.m.col
 
         doc = dict([list(item) for item in self.__dict__.items()])
+
+        # dirty hacking!
+        if 'active_menu' in doc:
+            doc['active_menu'] = pickle.dumps(doc['active_menu'])
+
         for key in list(doc):
             if type(doc[key]) not in self.field_types:
                 doc.pop(key)
@@ -113,6 +119,11 @@ class RabonaModel():
             if 'ObjectId' not in self.__dict__.keys():
                 if isinstance(__dict__['_id'], ObjectId):
                     self.ObjectId = __dict__['_id']
+
+            # pickle, active_menu
+            if 'active_menu' in __dict__:
+                __dict__['active_menu'] = pickle.loads(__dict__['active_menu'])
+
             return __dict__
 
         except AttributeError:
