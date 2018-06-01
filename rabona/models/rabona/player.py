@@ -1,2 +1,4 @@
 class RabonaPlayer():
-    pass
+
+    def __repr__(self):
+        return 'RabonaPlayer'

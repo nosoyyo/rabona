@@ -1,3 +1,4 @@
+from telegram import InlineKeyboardMarkup
 from telegram.ext.dispatcher import run_async
 
 from ri import RabonaImage
@@ -45,9 +46,10 @@ class MainMenu(Menu):
         self.buildMap()
 
     @classmethod
+    @run_async
     def start(self, bot, update):
 
-        ru = RabonaUser(update.message.from_user)
+        ru = RabonaUser(update.effective_user)
 
         welcome = Welcome(ru)
         message = welcome.message
@@ -105,10 +107,10 @@ class Quickstart(Menu):
     def uploadHandler(cls, bot, update):
         mmid = bot.send_message(
             update.effective_user.id,
-            'Please hold on, this may take up a while...').message_id
+            'Please hold on, this may take a while...').message_id
         bot.sendChatAction(update.effective_chat.id, action='typing')
 
-        ru = RabonaUser(update.message.from_user)
+        ru = RabonaUser(update.effective_user)
         ru.mmid = mmid
 
         photo_file = bot.get_file(update.message.photo[-1].file_id)
@@ -175,14 +177,23 @@ class Opponent(Menu):
         self.build(self.buttons)
         self.buildMap()
 
-    def AIHandler(self, bot, update):
-        # message = '对手 {} 是 AI.'.format(self.match.home) or away??
-        # TODO
-        ru = RabonaUser(update.message.from_user)
+    @run_async
+    def AIHandler(self, bot, update) -> (str, InlineKeyboardMarkup):
+
+        ru = RabonaUser(update.effective_user)
+
         self.match.opponent = 'AI'
         self.match.save()
+        self.match.generateUserPerspective()
+        home_away, oppo, win_lose = self.match.user_perspective
+        text = '这场{}对阵 {} 的{}已保存。'.format(home_away, oppo, win_lose)
+
+        mm = MainMenu(ru)
+        ru.active_menu = mm
+        ru.save()
+
         # editMessageText(text, cid, mid, reply_markup)
-        bot.editMessageText('比赛已保存。', ru.tele_id, ru.mmid)
+        bot.editMessageText(text, ru.tele_id, ru.mmid, reply_markup=mm.inline)
 
     def contactHandler(self, bot, update):
         pass

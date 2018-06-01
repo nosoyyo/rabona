@@ -55,6 +55,9 @@ class RabonaMatch(RabonaModel):
             except KeyError as e:
                 print(e)
 
+    def __repr__(self):
+        return 'RabonaMatch'
+
     def user310(self):
         if self.home_score > self.away_score:
             if self.user_is_home:
@@ -79,3 +82,24 @@ class RabonaMatch(RabonaModel):
         match_dir = user.dir + 'matches/'
         oid = len(os.listdir(match_dir))
         return RabonaMatch(oid=oid, user=user)
+
+    def generateUserPerspective(self) -> list:
+        '''
+        :return: `list` [home_away, oppo, win_lose]
+        '''
+        if self.user_is_home:
+            home_away = '主场'
+            oppo = self.away.club_name
+        else:
+            home_away = '客场'
+            oppo = self.home.club_name
+
+        if self.user_310 == 3:
+            win_lose = '胜利'
+        elif self.user_310 == 1:
+            win_lose = '平局'
+        else:
+            win_lose = '失利'
+        self.user_perspective = (home_away, oppo, win_lose)
+        self.save()
+        return (home_away, oppo, win_lose)

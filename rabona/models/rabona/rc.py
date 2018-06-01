@@ -35,3 +35,6 @@ class RabonaCompetition(RabonaModel):
             self.n_participants = ''
             self.mode = ''
             self.save()
+
+    def __repr__(self):
+        return 'RabonaCompetition'

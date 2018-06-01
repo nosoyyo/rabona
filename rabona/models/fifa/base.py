@@ -4,7 +4,7 @@ __version__ = {'0.1': '2018.05.03',
                '0.2': '2018.6.1',
                }
 
-
+import pickle
 import logging
 from bson.objectid import ObjectId
 
@@ -23,6 +23,10 @@ class FIFAModel():
     m = MongoDBPipeline()
     col = ''
     field_types = [bool, str, int, list, tuple, set, dict, bytes, ObjectId]
+    __FIFAObjects = ['FIFAPlayer', 'FIFAClub', 'FIFALeague']
+    __RabonaObjects = ['RabonaUser', 'RabonaMatch', 'RabonaModel',
+                       'RabonaCompetition', 'RabonaPerson', 'RabonaPlayer']
+    __special_objects = ['active_menu', ]
 
     def __init__(self, doc: dict=None, **kwargs):
         if not doc:
@@ -53,6 +57,19 @@ class FIFAModel():
                 col = self.m.col
 
         doc = dict([list(item) for item in self.__dict__.items()])
+
+        pickle_objs = {}
+
+        # pickling
+        for k, v in doc.items():
+            if v.__repr__() in self.__RabonaObjects:
+                pickle_objs[k] = pickle.dumps(doc[k])
+            elif v.__repr__() in self.__FIFAObjects:
+                pickle_objs[k] = {doc[k].ObjecdId: doc[k].col}
+            elif k in self.__special_objects:
+                pickle_objs[k] = pickle.dumps(doc[k])
+        for k, v in pickle_objs.items():
+            doc[k] = v
 
         if 'ObjectId' in self.__dict__.keys() or oid:
             if 'ObjectId' in self.__dict__.keys():
@@ -113,6 +130,19 @@ class FIFAModel():
             if 'ObjectId' not in self.__dict__.keys():
                 if isinstance(__dict__['_id'], ObjectId):
                     self.ObjectId = __dict__['_id']
+
+            # unpickling
+            for key in list(__dict__):
+                if key in self.__FIFAObjects:
+                    # {doc[k].ObjecdId: doc[k].col}
+                    __dict__[key] = self.m.ls(list(__dict__)[0], __dict__[key])
+                elif key in self.__RabonaObjects:
+                    # pickle_objs[k] = pickle.dumps(doc[k])
+                    __dict__[key] = pickle.loads(__dict__[key])
+                elif key in self.__special_objects:
+                    # pickle_objs[k] = pickle.dumps(doc[k])
+                    __dict__[key] = pickle.loads(__dict__[key])
+
             return __dict__
 
         except AttributeError:

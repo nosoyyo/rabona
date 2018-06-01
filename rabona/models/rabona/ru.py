@@ -34,6 +34,9 @@ class RabonaUser(RabonaModel):
 
         self.aloha()
 
+    def __repr__(self):
+        return 'RabonaUser'
+
     def aloha(self):
         query = {'tele_id': self.tele_id}
         is_new = not bool(self.m.ls(query, 'users'))

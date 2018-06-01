@@ -1,8 +1,10 @@
 import logging
 from telegram.message import Message
+from telegram.ext.dispatcher import run_async
 from telegram import (ReplyKeyboardMarkup, KeyboardButton,
                       InlineKeyboardButton, InlineKeyboardMarkup)
 
+from models import RabonaUser
 from errors import HandlerInitError
 
 
@@ -65,14 +67,19 @@ class Keyboard():
         pass
 
     @classmethod
+    @run_async
     def handler(cls, obj, bot, update) -> Message or bool:
         if update.callback_query:
-            global mid
+            ru = RabonaUser(update.effective_user)
             query = update.callback_query
             cid = update.effective_chat.id
             logging.debug('caught {}, returning {}'.format(
                 query.data, obj.mapping[query.data]))
-            message, rmkp = obj.mapping[query.data](bot, update)
-            bot.editMessageText(message, cid, mid, reply_markup=rmkp)
+
+            # here a bit tricky
+            # since calling a class.method(not @classmethod!)
+            # need to put the obj as the first positional arg
+            obj.mapping[query.data](obj, bot, update)
+            
         else:
             return obj.mapping[update.message.text]

@@ -34,8 +34,10 @@ def main():
 
     updater.dispatcher.add_handler(
         CommandHandler('start', views.MainMenu.start))
+    # updater.dispatcher.add_handler(MessageHandler(
+    #     Filters.text, handlerDispatcher)))
     updater.dispatcher.add_handler(MessageHandler(
-        (Filters.photo | Filters.text), views.Quickstart.uploadHandler))
+        Filters.photo, views.Quickstart.uploadHandler))
     updater.dispatcher.add_handler(CommandHandler('help', views.MainMenu.help))
     updater.dispatcher.add_handler(CallbackQueryHandler(handlerDispatcher))
     updater.dispatcher.add_error_handler(error)

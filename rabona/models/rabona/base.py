@@ -20,6 +20,10 @@ logging.basicConfig(
 class RabonaModel():
     m = MongoDBPipeline()
     col = ''
+    __FIFAObjects = ['FIFAPlayer', 'FIFAClub', 'FIFALeague']
+    __RabonaObjects = ['RabonaUser', 'RabonaMatch', 'RabonaModel',
+                       'RabonaCompetition', 'RabonaPerson', 'RabonaPlayer']
+    __special_objects = ['active_menu', ]
     field_types = [bool, str, int, list, tuple, set, dict, bytes, ObjectId]
 
     def __init__(self, doc: dict=None, **kwargs):
@@ -52,9 +56,18 @@ class RabonaModel():
 
         doc = dict([list(item) for item in self.__dict__.items()])
 
-        # dirty hacking!
-        if 'active_menu' in doc:
-            doc['active_menu'] = pickle.dumps(doc['active_menu'])
+        pickle_objs = {}
+
+        # pickling
+        for k, v in doc.items():
+            if v.__repr__() in self.__RabonaObjects:
+                pickle_objs[k] = {v.__repr__(): pickle.dumps(doc[k])}
+            elif v.__repr__() in self.__FIFAObjects:
+                pickle_objs[k] = {doc[k].ObjecdId: doc[k].col}
+            elif k in self.__special_objects:
+                pickle_objs[k] = pickle.dumps(doc[k])
+        for k, v in pickle_objs.items():
+            doc[k] = v
 
         for key in list(doc):
             if type(doc[key]) not in self.field_types:
@@ -120,9 +133,19 @@ class RabonaModel():
                 if isinstance(__dict__['_id'], ObjectId):
                     self.ObjectId = __dict__['_id']
 
-            # pickle, active_menu
-            if 'active_menu' in __dict__:
-                __dict__['active_menu'] = pickle.loads(__dict__['active_menu'])
+            # unpickling
+            for key in list(__dict__):
+                # if key in self.__FIFAObjects:
+                if isinstance(key, ObjectId):
+                    # {doc[k].ObjecdId: doc[k].col}
+                    __dict__[key] = self.m.ls(
+                        list(__dict__[key])[0], __dict__[key])
+                elif ??? in self.__RabonaObjects:
+                    # pickle_objs[k] = pickle.dumps(doc[k])
+                    __dict__[key] = pickle.loads(???)
+                elif key in self.__special_objects:
+                    # pickle_objs[k] = pickle.dumps(doc[k])
+                    __dict__[key] = pickle.loads(__dict__[key])
 
             return __dict__
 
