@@ -1,5 +1,6 @@
 __author__ = 'nosoyyo'
-__version__ = {'1.0': '2018.5.3',
+__version__ = {'0.1': '2017.4.5',
+               '1.0': '2018.5.3',
                '1.1': '2018.5.31',
                }
 
@@ -7,6 +8,7 @@ import time
 import random
 import logging
 import requests
+from functools import reduce
 from bs4 import BeautifulSoup
 
 from errors import InvalidURLError
@@ -17,6 +19,25 @@ from utils.pipeline import MongoDBPipeline
 
 
 sleep = 10
+magic_number = '16acaf9de83cf16'
+
+
+def magic(str: str) -> str:
+    pass
+
+
+def readMagic(magic_number: str)->str:
+    '''
+    Not serious magic at all.
+    Just to avoid literal material.
+    '''
+    tm = '{:d}'.format(int(eval('0x'+magic_number)))
+    result = []
+    for i in range(0, len(tm), 3):
+        a, b = i, i+3
+        result.append(int(tm[a:b]))
+    return reduce(lambda x, y: x+y, map(chr, result))
+
 
 # init
 logging.basicConfig(
@@ -26,11 +47,11 @@ logging.basicConfig(
     %(message)s')
 logging.info('session started.')
 
-site = 'http://www.futbin.com/'
+site = 'https://www.{}.com/'.format(readMagic(magic_number))
 
 
 def getReferer():
-    base = 'https://www.futbin.com/18/player/'
+    base = 'https://www.{}.com/18/player/'
     return base + str(round(random.random() * 10000))
 
 
@@ -38,7 +59,7 @@ def getLeagues(get_clubs=False, sleep=sleep):
     '''
     Base method of datamining.
     '''
-    url = 'https://www.futbin.com/18/leagues?page='
+    url = 'https://www.{}.com/18/leagues?page='.format(readMagic(magic_number))
 
     for page in range(1, 3):
         logging.debug('gonna sleep {} sec for resp. RAmen.'.format(sleep))
@@ -55,8 +76,8 @@ def getLeagues(get_clubs=False, sleep=sleep):
         for league_raw in leagues:
             league_info = {}
             league_info['league_name'] = league_raw.a.text
-            league_info['league_url'] = 'https://www.futbin.com/18/leagues/' +\
-                league_raw.a.text
+            league_info['league_url'] = 'https://www.{}.com/18/leagues/'\
+                .format(readMagic(magic_number)) + league_raw.a.text
             league_info['league_logo'] = league_raw.img['src']
             league_model = FIFALeague(data=league_info)
             league_model.clubs = []
@@ -81,7 +102,8 @@ def getClubs(league_name) -> list:
     :param club_name: `str` must be common full club_name
     :param url: `str` better use url for more accuracy
     '''
-    league_url = 'https://www.futbin.com/18/leagues/' + league_name
+    league_url = 'https://www.{}.com/18/leagues/'.format(
+        readMagic(magic_number)) + league_name
 
     time.sleep(sleep)
     logging.debug('grabbing {}'.format(league_url))
@@ -111,10 +133,11 @@ def getPlayers(club_name: str=None, url: str=None) -> None:
     Only for get club.players `list`, not for get player full attributions.
 
     :param club_name: `str` must be common full club_name
-    :param url: `str` valid futbin url
+    :param url: `str` valid {} url
     '''
     if club_name:
-        club_url = 'https://www.futbin.com/18/clubs/' + club_name
+        club_url = 'https://www.{}.com/18/clubs/'.format(
+            readMagic(magic_number)) + club_name
     else:
         club_url = url
 
@@ -149,7 +172,7 @@ def getPlayers(club_name: str=None, url: str=None) -> None:
         print('{} done.'.format(club_model.club_name))
 
 
-def isValidFutbinURL(url):
+def isValidURL(url):
     # TODO
     return True
 
@@ -168,7 +191,7 @@ def getPlayer(common_name: str=None,
             logging.error('`getPlayer` raises "{}"'.format(e))
 
     if not url:
-        query = 'https://www.futbin.com/18/players?search=' + common_name
+        query = 'https://www.{}.com/18/players?search=' + common_name
         r = requests.get(query)
         soup = BeautifulSoup(r.text, 'lxml')
         player_trs = soup.select('tr[class*="player_tr"]')
@@ -179,7 +202,7 @@ def getPlayer(common_name: str=None,
                 player_url = site + list(player_tds)[1].select(
                     'a[class="player_name_players_table"]')[0]['href']
     else:
-        if isValidFutbinURL(url):
+        if isValidURL(url):
             player_url = url
         else:
             raise InvalidURLError(url)
@@ -233,8 +256,10 @@ def main():
     try:
         for league in m.ls('FIFA_leagues'):
             for club in league['clubs']:
-                if 'players' not in club.keys()
-                getPlayers(club['club_name'])
+                if 'players' not in club.keys():
+                    getPlayers(club['club_name'])
+                else:
+                    continue
     except Exception as e:
         print(e)
 
